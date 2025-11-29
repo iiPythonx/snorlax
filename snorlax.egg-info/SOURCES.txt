@@ -1,7 +1,0 @@
-main.py
-pyproject.toml
-snorlax.egg-info/PKG-INFO
-snorlax.egg-info/SOURCES.txt
-snorlax.egg-info/dependency_links.txt
-snorlax.egg-info/requires.txt
-snorlax.egg-info/top_level.txt

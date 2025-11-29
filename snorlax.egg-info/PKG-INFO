@@ -1,9 +1,0 @@
-Metadata-Version: 2.4
-Name: snorlax
-Version: 0.1.0
-Summary: Add your description here
-Requires-Python: >=3.13
-Description-Content-Type: text/markdown
-Requires-Dist: fastapi>=0.122.0
-Requires-Dist: uvicorn[standard]>=0.38.0
-Requires-Dist: yt-dlp>=2025.11.12
