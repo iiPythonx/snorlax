@@ -1,5 +1,7 @@
 // Copyright (c) 2026 iiPython
 
+import { humanizeTime } from "./humanize.js";
+
 {
     for (const list of document.querySelectorAll("[data-api-type]")) {
         const type = list.getAttribute("data-api-type");
@@ -25,7 +27,7 @@
                                 <img src = "/videos/${item.uploader_id}/${item.id}.webp">
                                 <span>${item.title}</span>
                             </a>
-                            <span>${item.duration_string} • ${item.view_count} views • ${item.timestamp}</span>
+                            <span>${item.duration_string} • ${item.view_count.toLocaleString()} views • ${humanizeTime(item.timestamp)}</span>
                         `;
                         break;
     

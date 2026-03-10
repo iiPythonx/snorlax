@@ -27,3 +27,8 @@ curl -X POST http://localhost:8000/download/channel/YT_CHANNEL_ID
 ### Screenshot
 
 ![Snorlax Screenshot](.github/1.png)
+
+### Roadmap
+
+- [ ] Migrate /watch to an API endpoint, with JS-based humanize
+- [ ] Migrate the ingest methods to custom API endpoints
