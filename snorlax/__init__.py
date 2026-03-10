@@ -21,6 +21,7 @@ from snorlax.database import db
 async def lifespan(app: FastAPI) -> typing.AsyncGenerator:
     await db.init()
     yield
+    await db.write()
 
 app = FastAPI(openapi_url = None, lifespan = lifespan)
 app.state.snorlax = Snorlax()

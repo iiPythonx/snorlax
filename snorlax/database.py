@@ -30,6 +30,10 @@ class Database:
         )""")
         await self.db.commit()
 
+    async def write(self) -> None:
+        await self.db.commit()
+        await self.db.close()
+
     async def add_channel(self, id: str, name: str, subscribers: int) -> None:
         await self.db.execute("INSERT INTO channels VALUES (?, ?, ?)", (id, name, subscribers))
         await self.db.commit()

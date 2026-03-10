@@ -56,4 +56,7 @@ class Snorlax:
             video_path.mkdir(parents = True)
 
         for file in self.temp_path.iterdir():
+            if video_id not in file.name:
+                continue
+
             file.rename(video_path / file.name.replace(video_id, {".webp": "cover", ".vtt": "sub", ".webm": "video"}[file.suffix]))

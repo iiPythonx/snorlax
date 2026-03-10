@@ -34,14 +34,16 @@ if (response.code !== 200) {
 
     // Handle captions
     const languages = new Intl.DisplayNames(["en"], { type: "language" });
-    for (const lang of video.caption_langs.split(",")) {
-        const track = document.createElement("track");
-        track.kind = "captions"
-        track.src = `${url}/sub.${lang}.vtt`;
-        track.srclang = lang;
-        track.label = languages.of(lang) || lang;
-        track.default = ["en", "en-GB"].includes(lang);
-        video_element.appendChild(track);
+    if (video.caption_langs) {
+        for (const lang of video.caption_langs.split(",")) {
+            const track = document.createElement("track");
+            track.kind = "captions"
+            track.src = `${url}/sub.${lang}.vtt`;
+            track.srclang = lang;
+            track.label = languages.of(lang) || lang;
+            track.default = ["en", "en-GB"].includes(lang);
+            video_element.appendChild(track);
+        }
     }
 
     // Initialize playback
