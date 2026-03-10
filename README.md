@@ -30,5 +30,5 @@ curl -X POST http://localhost:8000/download/channel/YT_CHANNEL_ID
 
 ### Roadmap
 
-- [ ] Migrate /watch to an API endpoint, with JS-based humanize
+- [x] Migrate /watch to an API endpoint, with JS-based humanize
 - [ ] Migrate the ingest methods to custom API endpoints

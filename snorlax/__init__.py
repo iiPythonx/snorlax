@@ -3,7 +3,6 @@
 # Modules
 import typing
 from pathlib import Path
-from datetime import datetime
 from contextlib import asynccontextmanager
 
 from fastapi import BackgroundTasks, Depends, FastAPI, Request
@@ -12,7 +11,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from pydantic import Field
-from humanize import naturaltime
 from starlette.exceptions import HTTPException
 
 from snorlax.ingest import Snorlax
@@ -28,12 +26,15 @@ app = FastAPI(openapi_url = None, lifespan = lifespan)
 app.state.snorlax = Snorlax()
 
 templates = Jinja2Templates(directory = Path(__file__).parent / "templates")
-templates.env.filters |= {"naturaltime": lambda x: naturaltime(datetime.fromtimestamp(x))}
 
 # Exception processing
 @app.exception_handler(HTTPException)
 async def handle_exception(request: Request, exception: HTTPException):
-    return templates.TemplateResponse(request, f"errors/{exception.status_code}.jinja2")
+    return templates.TemplateResponse(
+        request,
+        f"errors/{exception.status_code}.jinja2",
+        status_code = exception.status_code
+    )
 
 # API
 async def pagination_parameters(
@@ -47,10 +48,26 @@ async def route_v1_channels(pagination: typing.Annotated[dict, Depends(paginatio
     channels, total = await db.get_channels(**pagination)
     return JSONResponse({"code": 200, "data": {"items": channels, "total": total}})
 
+@app.get("/v1/channel/{channel_id}")
+async def route_v1_channel(channel_id: str) -> JSONResponse:
+    channel_data = await db.get_channel(channel_id)
+    if channel_data is None:
+        return JSONResponse({"code": 404, "data": {"message": "The specified channel does not exist."}}, status_code = 404)
+
+    return JSONResponse({"code": 200, "data": channel_data})
+
 @app.get("/v1/videos")
 async def route_v1_videos(pagination: typing.Annotated[dict, Depends(pagination_parameters)], channel_id: str | None = None) -> JSONResponse:
     videos, total = await db.get_videos(channel_id = channel_id, **pagination)
     return JSONResponse({"code": 200, "data": {"items": videos, "total": total}})
+
+@app.get("/v1/video/{video_id}")
+async def route_v1_video(video_id: str) -> JSONResponse:
+    video_data = await db.get_video(video_id)
+    if video_data is None:
+        return JSONResponse({"code": 404, "data": {"message": "The specified video does not exist."}}, status_code = 404)
+
+    return JSONResponse({"code": 200, "data": video_data})
 
 # Routing
 @app.get("/", response_class = HTMLResponse)
@@ -65,16 +82,9 @@ async def route_channel(request: Request, channel_id: str):
 
     return templates.TemplateResponse(request, "pages/channel.jinja2", {"channel": channel})
 
-@app.get("/watch/{video_id:str}", response_class = HTMLResponse)
+@app.get("/watch/{video_id}", response_class = HTMLResponse)
 async def route_watch(request: Request, video_id: str):
-    video_data = await db.get_video(video_id)
-    if video_data is None:
-        raise HTTPException(status_code = 404)
-
-    return templates.TemplateResponse(request, "pages/video.jinja2", {
-        "video": video_data,
-        "channel": await db.get_channel(video_data["uploader_id"])
-    })
+    return templates.TemplateResponse(request, "pages/video.jinja2")
 
 # Download routes
 @app.post("/download/video/{video_id:str}")

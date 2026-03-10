@@ -1,26 +1,8 @@
 {% extends "main.jinja2" %}
 {% block meta %}
-    <link href = "https://vjs.zencdn.net/8.23.4/video-js.css" rel = "stylesheet" />
-{% endblock %}
-{% block content %}
-    <h2>{{ video["title"] }}</h2>
-    <hr>
-
-    <!-- Video -->
-    {% set URL = "/videos/%s/%s" % (video['uploader_id'], video['id']) %}
-    <video-js controls preload = "auto" poster = "{{ URL }}.webp" data-setup = "{}" class = "vjs-fluid">
-        <source src = "{{ URL }}.webm" type = "video/webm">
-        <track kind = "captions" src = "{{ URL }}.en.vtt" srclang = "en" label = "English" default>
-    </video-js>
-
-    <hr>
-    <span>
-        <a href = "/channel/{{ video['uploader_id'] }}">{{ video["uploader_id"] }}</a> ({{ "{:,}".format(channel["subscribers"]) }} subscribers) <br>
-        {{ video["duration_string"] }} • {{ "{:,}".format(video["view_count"]) }} views • {{ "{:,}".format(video["like_count"]) }} likes • {{ video["timestamp"] | naturaltime }}
-    </span>
-    <hr>
-    <pre style = "margin-bottom: 20px;">{{ video["description"] }}</pre>
+    <link href = "https://cdn.jsdelivr.net/npm/video.js/dist/video-js.min.css" rel = "stylesheet" />
 {% endblock %}
 {% block scripts %}
-    <script src = "https://vjs.zencdn.net/8.23.4/video.min.js"></script>
+    <script src = "https://cdn.jsdelivr.net/npm/video.js/dist/video.min.js"></script>
+    <script src = "/js/video.js" type = "module"></script>
 {% endblock %}
