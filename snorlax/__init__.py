@@ -64,3 +64,4 @@ async def route_download_channel(channel_id: str, background_tasks: BackgroundTa
 
 # Mount /videos
 app.mount("/videos", StaticFiles(directory = app.state.snorlax.video_path))
+app.mount("/", StaticFiles(directory = Path(__file__).parent / "static"))

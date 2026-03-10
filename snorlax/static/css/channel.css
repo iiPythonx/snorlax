@@ -1,0 +1,15 @@
+section {
+    gap: 10px;
+    display: flex;
+    flex-wrap: wrap;
+}
+article {
+    width: 300px;
+
+    a {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        margin-bottom: 5px;
+    }
+}

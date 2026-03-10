@@ -1,0 +1,28 @@
+* {
+    color: #fff;
+    margin: 0px;
+    font-family: monospace;
+}
+body, html {
+    height: 100%;
+}
+body {
+    display: flex;
+    justify-content: center;
+    background: #000;
+}
+main {
+    width: 1230px;
+    height: fit-content;
+    margin-top: 100px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+hr {
+    border-color: #535353;
+}
+pre {
+    text-wrap: wrap;
+}

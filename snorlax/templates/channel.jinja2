@@ -1,27 +1,13 @@
 {% extends "main.jinja2" %}
+{% block meta %}
+    <link rel = "stylesheet" href = "/css/channel.css">
+{% endblock %}
 {% block content %}
     <div>
         <h2>{{ channel["name"] }}</h2>
         <span style = "line-height: 2;">{{ "{:,}".format(channel["subscribers"]) }} subscribers</span>
     </div>
     <hr>
-    <style>
-        section {
-            gap: 10px;
-            display: flex;
-            flex-wrap: wrap;
-        }
-        article {
-            width: 300px;
-
-            a {
-                display: flex;
-                flex-direction: column;
-                gap: 5px;
-                margin-bottom: 5px;
-            }
-        }
-    </style>
     <section>
         {% for video in videos %}
             <article>

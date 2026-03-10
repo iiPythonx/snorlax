@@ -16,7 +16,7 @@
         {{ video["duration_string"] }} • {{ "{:,}".format(video["view_count"]) }} views • {{ "{:,}".format(video["like_count"]) }} likes • {{ video["timestamp"] | naturaltime }}
     </span>
     <hr>
-    <pre style = "text-wrap: wrap;">{{ video["description"] }}</pre>
+    <pre style = "margin-bottom: 20px;">{{ video["description"] }}</pre>
 
     <!-- VideoJS -->
     <link href = "https://vjs.zencdn.net/8.23.4/video-js.css" rel = "stylesheet" />
