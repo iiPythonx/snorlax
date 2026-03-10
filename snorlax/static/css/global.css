@@ -27,6 +27,14 @@ pre {
     text-wrap: wrap;
 }
 
+/* Button styling */
+button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0px;
+}
+
 /* Structuring */
 .flex {
     gap: 10px;
@@ -36,18 +44,23 @@ pre {
     flex-direction: column;
 }
 
-/* Video listings */
-.video-list {
-    flex-wrap: wrap;
+/* Item listings */
+div[data-api-type = "channel"] .item-list {
+    height: 148px;
 }
-.video {
-    width: 300px;
 
-    a {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-        margin-bottom: 5px;
+.item-list {
+    flex-wrap: wrap;
+    height: 470px;
+
+    article {
+        width: 300px;
+
+        a {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 5px;
+        }
     }
 }
-

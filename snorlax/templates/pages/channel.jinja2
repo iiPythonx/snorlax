@@ -7,5 +7,5 @@
         <span style = "line-height: 2;">{{ "{:,}".format(channel["subscribers"]) }} subscribers</span>
     </div>
     <hr>
-    {{ renderer.render_videos(videos) }}
+    {{ renderer.paginate("video", "channel_id=" ~ channel["id"]) }}
 {% endblock %}

@@ -8,12 +8,10 @@
     <hr>
     <section class = "flex column">
         <h2>Channels</h2>
-        {% for channel in channels %}
-            <a href = "/channel/{{ channel['id'] }}">{{ channel['name'] }}</a>
-        {% endfor %}
+        {{ renderer.paginate("channel", "", 16) }}
     </section>
     <section class = "flex column">
-        <h2>Latest</h2>
-        {{ renderer.render_videos(videos) }}
+        <h2>Videos</h2>
+        {{ renderer.paginate("video", "") }}
     </section>
 {% endblock %}

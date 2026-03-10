@@ -1,13 +1,17 @@
-{% macro render_videos(videos) %}
-    <div class = "flex video-list">
-        {% for video in videos %}
-            <article class = "video">
-                <a href = "/watch/{{ video['id'] }}">
-                    <img src = "/videos/{{ video['uploader_id'] }}/{{ video['id'] }}.webp">
-                    <span>{{ video["title"] }}</span>
-                </a>
-                <span>{{ video["duration_string"] }} • {{ "{:,}".format(video["view_count"]) }} views • {{ video["timestamp"] | naturaltime }}</span>
-            </article>
-        {% endfor %}
+{% macro paginate(type, filter, limit) %}
+    <div
+        class = "flex column"
+        data-api-type = "{{ type }}"
+        data-api-filter = "{{ filter or '' }}"
+        data-api-limit = "{{ limit or 8 }}"
+    >
+        <div class = "flex item-list">Loading...</div>
+        <article class = "flex" style = "width: 100%; justify-content: center;">
+            <div>
+                <button class = "btn-back">&lt; Back</button>
+                <span>Page 1 / 1</span>
+                <button class = "btn-next">Next &gt;</button>
+            </div>
+        </article>
     </div>
 {% endmacro %}

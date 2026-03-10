@@ -6,7 +6,7 @@ from pathlib import Path
 from datetime import datetime
 from contextlib import asynccontextmanager
 
-from fastapi import BackgroundTasks, FastAPI, Request
+from fastapi import BackgroundTasks, Depends, FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -36,15 +36,21 @@ async def handle_exception(request: Request, exception: HTTPException):
     return templates.TemplateResponse(request, f"errors/{exception.status_code}.jinja2")
 
 # API
+async def pagination_parameters(
+    limit: typing.Annotated[int, Field(ge = 1, le = 30)] = 20,
+    page: typing.Annotated[int, Field(ge = 1)] = 1
+) -> dict[str, int]:
+    return {"limit": limit, "page": page}
+
 @app.get("/v1/channels")
-async def route_v1_channels(page: typing.Annotated[int, Field(ge = 1)] = 1) -> JSONResponse:
-    channels, total = await db.get_channels(limit = 20, page = page)
-    return JSONResponse({"code": 200, "data": {"channels": channels, "total": total}})
+async def route_v1_channels(pagination: typing.Annotated[dict, Depends(pagination_parameters)]) -> JSONResponse:
+    channels, total = await db.get_channels(**pagination)
+    return JSONResponse({"code": 200, "data": {"items": channels, "total": total}})
 
 @app.get("/v1/videos")
-async def route_v1_videos(channel_id: str | None = None, page: typing.Annotated[int, Field(ge = 1)] = 1) -> JSONResponse:
-    videos, total = await db.get_videos(channel_id = channel_id, limit = 20, page = page)
-    return JSONResponse({"code": 200, "data": {"videos": videos, "total": total}})
+async def route_v1_videos(pagination: typing.Annotated[dict, Depends(pagination_parameters)], channel_id: str | None = None) -> JSONResponse:
+    videos, total = await db.get_videos(channel_id = channel_id, **pagination)
+    return JSONResponse({"code": 200, "data": {"items": videos, "total": total}})
 
 # Routing
 @app.get("/", response_class = HTMLResponse)
@@ -57,10 +63,7 @@ async def route_channel(request: Request, channel_id: str):
     if channel is None:
         raise HTTPException(status_code = 404)
 
-    return templates.TemplateResponse(request, "pages/channel.jinja2", {
-        "channel": channel,
-        "videos": await db.get_videos(channel_id)
-    })
+    return templates.TemplateResponse(request, "pages/channel.jinja2", {"channel": channel})
 
 @app.get("/watch/{video_id:str}", response_class = HTMLResponse)
 async def route_watch(request: Request, video_id: str):
