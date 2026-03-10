@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "snorlax"
-version = "0.7.0"
+version = "0.8.0"
 description = "Local-first video downloading and hosting"
 readme = "README.md"
 license = "GPL-3.0-or-later"
@@ -15,7 +15,7 @@ dependencies = [
     "fastapi>=0.122.0",
     "jinja2>=3.1.6",
     "uvicorn[standard]>=0.38.0",
-    "yt-dlp>=2025.11.12",
+    "yt-dlp[curl-cffi,default]>=2025.11.12",
 ]
 
 [project.urls]

@@ -24,7 +24,7 @@ import { humanizeTime } from "./humanize.js";
                     case "video":
                         element.innerHTML = `
                             <a href = "/watch/${item.id}">
-                                <img src = "/videos/${item.uploader_id}/${item.id}.webp">
+                                <img src = "/videos/${item.uploader_id}/${item.id}/cover.webp">
                                 <span>${item.title}</span>
                             </a>
                             <span>${item.duration_string} • ${item.view_count.toLocaleString()} views • ${humanizeTime(item.timestamp)}</span>

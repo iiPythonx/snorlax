@@ -10,7 +10,6 @@ if (response.code !== 200) {
 } else {
     const video = response.data;
     const channel = (await (await fetch(`/v1/channel/${video.uploader_id}`)).json()).data;
-    console.log(video, channel);
 
     // Render HTML
     const url = `/videos/${video.uploader_id}/${video.id}`;
@@ -19,9 +18,8 @@ if (response.code !== 200) {
         <hr>
 
         <!-- Video -->
-        <video-js controls preload = "auto" poster = "${url}.webp" data-setup = "{}" class = "vjs-fluid">
-            <source src = "${url}.webm" type = "video/webm">
-            <track kind = "captions" src = "${url}.en.vtt" srclang = "en" label = "English" default>
+        <video-js controls preload = "auto" poster = "${url}/cover.webp" data-setup = "{}" class = "vjs-fluid">
+            <source src = "${url}/video.webm" type = "video/webm">
         </video-js>
 
         <hr>
@@ -32,6 +30,20 @@ if (response.code !== 200) {
         <hr>
         <pre style = "margin-bottom: 20px;">${video.description}</pre>
     `;
+    const video_element = document.querySelector("video-js");
 
-    videojs(document.querySelector("video-js"));
+    // Handle captions
+    const languages = new Intl.DisplayNames(["en"], { type: "language" });
+    for (const lang of video.caption_langs.split(",")) {
+        const track = document.createElement("track");
+        track.kind = "captions"
+        track.src = `${url}/sub.${lang}.vtt`;
+        track.srclang = lang;
+        track.label = languages.of(lang) || lang;
+        track.default = ["en", "en-GB"].includes(lang);
+        video_element.appendChild(track);
+    }
+
+    // Initialize playback
+    videojs(video_element);
 }

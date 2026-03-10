@@ -3,7 +3,7 @@
 import typing
 import aiosqlite
 
-VIDEO_PARAMETERS = ("id", "title", "description", "view_count", "like_count", "duration_string", "timestamp", "uploader_id")
+VIDEO_PARAMETERS = ("id", "title", "description", "view_count", "like_count", "duration_string", "timestamp", "uploader_id", "caption_langs")
 CHANNEL_PARAMETERS = ("id", "name", "subscribers")
 
 class Database:
@@ -25,7 +25,8 @@ class Database:
             like_count      INTEGER,
             duration_string TEXT,
             timestamp       INTEGER,
-            uploader_id     TEXT
+            uploader_id     TEXT,
+            caption_langs   TEXT
         )""")
         await self.db.commit()
 
@@ -33,9 +34,9 @@ class Database:
         await self.db.execute("INSERT INTO channels VALUES (?, ?, ?)", (id, name, subscribers))
         await self.db.commit()
 
-    async def add_video(self, id: str, title: str, description: str, views: int, likes: int, duration: str, timestamp: int, uploader_id: str) -> None:
-        await self.db.execute("INSERT INTO videos VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (
-            id, title, description, views, likes, duration, timestamp, uploader_id
+    async def add_video(self, id: str, title: str, description: str, views: int, likes: int, duration: str, timestamp: int, uploader_id: str, caption_langs: str) -> None:
+        await self.db.execute("INSERT INTO videos VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (
+            id, title, description, views, likes, duration, timestamp, uploader_id, caption_langs
         ))
         await self.db.commit()
 

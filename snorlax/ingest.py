@@ -11,11 +11,15 @@ from snorlax.database import db, VIDEO_PARAMETERS
 class Snorlax:
     def __init__(self) -> None:
         self.video_path = Path("videos")
+
+        # Create temp and initial videos path
         self.temp_path = self.video_path / "in_progress"
+        self.temp_path.mkdir(parents = True, exist_ok = True)
 
         # Base yt-dlp parameters
         self.ytdl = YoutubeDL({
             "writesubtitles": True,
+            "allsubtitles": True,
             "writethumbnail": True,
             "remote_components": {"ejs:github"},
             "outtmpl": str(self.temp_path / "%(id)s.%(ext)s"),
@@ -43,12 +47,13 @@ class Snorlax:
         if await db.get_channel(channel_id) is None:
             await db.add_channel(channel_id, info["uploader"], info["channel_follower_count"])
 
+        info["caption_langs"] = ",".join(info["subtitles"].keys())
         await db.add_video(*map(info.get, VIDEO_PARAMETERS))  # type: ignore
 
         # Reorganize everything
-        channel_path = self.video_path / channel_id
-        if not channel_path.is_dir():
-            channel_path.mkdir(parents = True)
+        video_path = self.video_path / channel_id / video_id
+        if not video_path.is_dir():
+            video_path.mkdir(parents = True)
 
         for file in self.temp_path.iterdir():
-            file.rename(channel_path / file.name)
+            file.rename(video_path / file.name.replace(video_id, {".webp": "cover", ".vtt": "sub", ".webm": "video"}[file.suffix]))
