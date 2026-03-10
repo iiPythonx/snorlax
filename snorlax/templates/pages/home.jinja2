@@ -1,0 +1,19 @@
+{% extends "main.jinja2" %}
+{% import "macros/renderer.jinja2" as renderer %}
+
+{% block content %}
+    <section>
+        <h2>Snorlax</h2>
+    </section>
+    <hr>
+    <section class = "flex column">
+        <h2>Channels</h2>
+        {% for channel in channels %}
+            <a href = "/channel/{{ channel['id'] }}">{{ channel['name'] }}</a>
+        {% endfor %}
+    </section>
+    <section class = "flex column">
+        <h2>Latest</h2>
+        {{ renderer.render_videos(videos) }}
+    </section>
+{% endblock %}

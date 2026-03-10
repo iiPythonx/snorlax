@@ -1,0 +1,13 @@
+{% macro render_videos(videos) %}
+    <div class = "flex video-list">
+        {% for video in videos %}
+            <article class = "video">
+                <a href = "/watch/{{ video['id'] }}">
+                    <img src = "/videos/{{ video['uploader_id'] }}/{{ video['id'] }}.webp">
+                    <span>{{ video["title"] }}</span>
+                </a>
+                <span>{{ video["duration_string"] }} • {{ "{:,}".format(video["view_count"]) }} views • {{ video["timestamp"] | naturaltime }}</span>
+            </article>
+        {% endfor %}
+    </div>
+{% endmacro %}

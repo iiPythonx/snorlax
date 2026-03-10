@@ -3,7 +3,8 @@
 import typing
 import aiosqlite
 
-VIDEO_PARAMETERS = ["id", "title", "description", "view_count", "like_count", "duration_string", "timestamp", "uploader_id"]
+VIDEO_PARAMETERS = ("id", "title", "description", "view_count", "like_count", "duration_string", "timestamp", "uploader_id")
+CHANNEL_PARAMETERS = ("id", "name", "subscribers")
 
 class Database:
     def __init__(self) -> None:
@@ -38,39 +39,43 @@ class Database:
         ))
         await self.db.commit()
 
-    async def channel_exists(self, channel_id: str) -> bool:
-        async with self.db.execute("SELECT id FROM channels WHERE id = ?", (channel_id,)) as result:
-            return await result.fetchone() is not None
+    # Channels
+    async def get_channel(self, channel_id: str) -> dict[str, typing.Any] | None:
+        async with self.db.execute("SELECT * FROM channels WHERE id = ?", (channel_id,)) as result:
+            channel = await result.fetchone()
+            return dict(zip(CHANNEL_PARAMETERS, channel)) if channel else None
 
-    async def get_channels(self) -> list[dict]:
-        async with self.db.execute_fetchall("SELECT * FROM channels") as results:
-            return [
-                {"id": id, "name": name, "subscribers": subscribers}
-                for id, name, subscribers in results
-            ]
+    async def get_channels(self, search: str | None = None, limit: int | None = None) -> list[dict]:
+        query, params = "SELECT * FROM channels", []
+        if search is not None:
+            query += " WHERE name LIKE ?"
+            params.append(f"%{search}%")
 
-    async def get_videos(self, channel_id: str) -> list[dict]:
-        async with self.db.execute_fetchall(
-            "SELECT id, title, view_count, duration_string, timestamp FROM videos WHERE uploader_id = ?",
-            (channel_id,)
-        ) as results:
-            return [
-                {"id": id, "title": title, "view_count": view_count, "duration_string": duration_string, "timestamp": timestamp}
-                for id, title, view_count, duration_string, timestamp in results
-            ]
+        if limit is not None:
+            query += " LIMIT ?"
+            params.append(limit)
 
+        async with self.db.execute_fetchall(query, params) as channels:
+            return [dict(zip(CHANNEL_PARAMETERS, channel)) for channel in channels]
+
+    # Videos
     async def get_video(self, video_id: str) -> dict[str, typing.Any] | None:
         async with self.db.execute("SELECT * FROM videos WHERE id = ?", (video_id,)) as result:
             result = await result.fetchone()
-            return {k: result[i] for i, k in enumerate(VIDEO_PARAMETERS)} if result else None
+            return dict(zip(VIDEO_PARAMETERS, result)) if result else None
 
-    async def get_channel(self, channel_id: str) -> dict[str, typing.Any] | None:
-        async with self.db.execute("SELECT * FROM channels WHERE id = ?", (channel_id,)) as result:
-            result = await result.fetchone()
-            return {
-                "id": result[0],
-                "name": result[1],
-                "subscribers": result[2]
-            } if result else None
+    async def get_videos(self, channel_id: str | None = None, limit: int | None = None) -> list[dict]:
+        query, params = f"SELECT {', '.join(VIDEO_PARAMETERS)} FROM videos", []
+        if channel_id is not None:
+            query += " WHERE uploader_id = ?"
+            params.append(channel_id)
+
+        query += " ORDER BY timestamp DESC"
+        if limit is not None:
+            query += " LIMIT ?"
+            params.append(limit)
+
+        async with self.db.execute_fetchall(query, params) as results:
+            return [dict(zip(VIDEO_PARAMETERS, row)) for row in results]
 
 db = Database()

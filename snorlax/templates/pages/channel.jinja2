@@ -1,0 +1,11 @@
+{% extends "main.jinja2" %}
+{% import "macros/renderer.jinja2" as renderer %}
+
+{% block content %}
+    <div>
+        <h2>{{ channel["name"] }}</h2>
+        <span style = "line-height: 2;">{{ "{:,}".format(channel["subscribers"]) }} subscribers</span>
+    </div>
+    <hr>
+    {{ renderer.render_videos(videos) }}
+{% endblock %}

@@ -12,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from humanize import naturaltime
+from starlette.exceptions import HTTPException
 
 from snorlax.ingest import Snorlax
 from snorlax.database import db
@@ -28,14 +29,26 @@ app.state.snorlax = Snorlax()
 templates = Jinja2Templates(directory = Path(__file__).parent / "templates")
 templates.env.filters |= {"naturaltime": lambda x: naturaltime(datetime.fromtimestamp(x))}
 
+# Exception processing
+@app.exception_handler(HTTPException)
+async def handle_exception(request: Request, exception: HTTPException):
+    return templates.TemplateResponse(request, f"errors/{exception.status_code}.jinja2")
+
 # Routing
+@app.get("/", response_class = HTMLResponse)
+async def route_home(request: Request):
+    return templates.TemplateResponse(request, "pages/home.jinja2", {
+        "videos": await db.get_videos(limit = 12),
+        "channels": await db.get_channels(limit = 8)
+    })
+
 @app.get("/channel/{channel_id:str}", response_class = HTMLResponse)
 async def route_channel(request: Request, channel_id: str):
     channel = await db.get_channel(channel_id)
     if channel is None:
-        return templates.TemplateResponse(request, "404.jinja2")
+        raise HTTPException(status_code = 404)
 
-    return templates.TemplateResponse(request, "channel.jinja2", {
+    return templates.TemplateResponse(request, "pages/channel.jinja2", {
         "channel": channel,
         "videos": await db.get_videos(channel_id)
     })
@@ -44,9 +57,9 @@ async def route_channel(request: Request, channel_id: str):
 async def route_watch(request: Request, video_id: str):
     video_data = await db.get_video(video_id)
     if video_data is None:
-        return templates.TemplateResponse(request, "404.jinja2")
+        raise HTTPException(status_code = 404)
 
-    return templates.TemplateResponse(request, "video.jinja2", {
+    return templates.TemplateResponse(request, "pages/video.jinja2", {
         "video": video_data,
         "channel": await db.get_channel(video_data["uploader_id"])
     })

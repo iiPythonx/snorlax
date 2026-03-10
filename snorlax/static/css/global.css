@@ -26,3 +26,28 @@ hr {
 pre {
     text-wrap: wrap;
 }
+
+/* Structuring */
+.flex {
+    gap: 10px;
+    display: flex;
+}
+.column {
+    flex-direction: column;
+}
+
+/* Video listings */
+.video-list {
+    flex-wrap: wrap;
+}
+.video {
+    width: 300px;
+
+    a {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        margin-bottom: 5px;
+    }
+}
+
