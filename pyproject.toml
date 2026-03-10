@@ -1,9 +1,15 @@
+[build-system]
+requires = ["uv_build>=0.10.7,<0.11.0"]
+build-backend = "uv_build"
+
 [project]
 name = "snorlax"
 version = "0.1.0"
-description = "Add your description here"
+description = "Local-first video downloading and hosting"
 readme = "README.md"
-requires-python = ">=3.13"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE.txt"]
+requires-python = ">=3.11"
 dependencies = [
     "aiosqlite>=0.21.0",
     "fastapi>=0.122.0",
@@ -12,3 +18,11 @@ dependencies = [
     "uvicorn[standard]>=0.38.0",
     "yt-dlp>=2025.11.12",
 ]
+
+[project.urls]
+Homepage = "https://github.com/iiPythonx/snorlax"
+Issues = "https://github.com/iiPythonx/snorlax/issues"
+
+[tool.uv.build-backend]
+module-name = "snorlax"
+module-root = ""
