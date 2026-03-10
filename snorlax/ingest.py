@@ -40,7 +40,7 @@ class Snorlax:
 
         # Save everything to database
         channel_id = info["uploader_id"]
-        if not await db.channel_exists(channel_id):
+        if await db.get_channel(channel_id) is None:
             await db.add_channel(channel_id, info["uploader"], info["channel_follower_count"])
 
         await db.add_video(*map(info.get, VIDEO_PARAMETERS))  # type: ignore
