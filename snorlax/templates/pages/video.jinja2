@@ -1,4 +1,7 @@
 {% extends "main.jinja2" %}
+{% block meta %}
+    <link href = "https://vjs.zencdn.net/8.23.4/video-js.css" rel = "stylesheet" />
+{% endblock %}
 {% block content %}
     <h2>{{ video["title"] }}</h2>
     <hr>
@@ -17,8 +20,7 @@
     </span>
     <hr>
     <pre style = "margin-bottom: 20px;">{{ video["description"] }}</pre>
-
-    <!-- VideoJS -->
-    <link href = "https://vjs.zencdn.net/8.23.4/video-js.css" rel = "stylesheet" />
+{% endblock %}
+{% block scripts %}
     <script src = "https://vjs.zencdn.net/8.23.4/video.min.js"></script>
 {% endblock %}

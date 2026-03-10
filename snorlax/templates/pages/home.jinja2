@@ -1,5 +1,5 @@
 {% extends "main.jinja2" %}
-{% import "macros/renderer.jinja2" as renderer %}
+{% from "macros/paginate.jinja2" import paginate %}
 
 {% block content %}
     <section>
@@ -8,10 +8,10 @@
     <hr>
     <section class = "flex column">
         <h2>Channels</h2>
-        {{ renderer.paginate("channel", "", 16) }}
+        {{ paginate("channel", "", 16) }}
     </section>
     <section class = "flex column">
         <h2>Videos</h2>
-        {{ renderer.paginate("video", "") }}
+        {{ paginate("video", "") }}
     </section>
 {% endblock %}

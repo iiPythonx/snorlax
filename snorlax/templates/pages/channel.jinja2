@@ -1,5 +1,5 @@
 {% extends "main.jinja2" %}
-{% import "macros/renderer.jinja2" as renderer %}
+{% from "macros/paginate.jinja2" import paginate %}
 
 {% block content %}
     <div>
@@ -7,5 +7,5 @@
         <span style = "line-height: 2;">{{ "{:,}".format(channel["subscribers"]) }} subscribers</span>
     </div>
     <hr>
-    {{ renderer.paginate("video", "channel_id=" ~ channel["id"]) }}
+    {{ paginate("video", "channel_id=" ~ channel["id"]) }}
 {% endblock %}
