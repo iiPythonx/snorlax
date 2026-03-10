@@ -21,5 +21,9 @@ Replicate a channel from YouTube into Snorlax:
 curl -X POST http://localhost:8000/download/channel/YT_CHANNEL_ID
 ```
 
-> [!NOTE]  
+> [!NOTE]
 > These endpoints are subject to change as the API develops.
+
+### Screenshot
+
+![Snorlax Screenshot](.github/1.png)
