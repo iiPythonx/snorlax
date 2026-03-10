@@ -39,24 +39,60 @@ class Database:
         ))
         await self.db.commit()
 
+    # Querying
+    async def _fetch(
+        self,
+        table: str,
+        columns: tuple[str, ...],
+        filters: dict[str, typing.Any] = {},
+        order_by: str | None = None,
+        limit: int | None = None,
+        page: int | None = 1
+    ) -> tuple[list[dict], int]:
+        query, params = f"SELECT {', '.join(columns)} FROM {table}", []
+        if filters:
+            query += " WHERE " + " AND ".join(f"{k} = ?" for k in filters)
+            params.extend(filters.values())
+
+        # Handle counting
+        count_query = f"SELECT COUNT(*) FROM {table}"
+        if filters:
+            count_query += " WHERE " + " AND ".join(f"{k} = ?" for k in filters)
+
+        count_result = await (await self.db.execute(count_query, list(filters.values()))).fetchone()
+        if count_result is None:
+            raise RuntimeError("SQL returned no count data!")
+
+        # Handle ordering, limiting, pagination
+        if order_by:
+            query += f" ORDER BY {order_by}"
+
+        if limit is not None:
+            query += " LIMIT ?"
+            params.append(limit)
+
+            if page is not None and page > 1:
+                offset = (page - 1) * limit
+                query += " OFFSET ?"
+                params.append(offset)
+
+        async with self.db.execute_fetchall(query, params) as rows:
+            return [dict(zip(columns, row)) for row in rows], count_result[0]
+
     # Channels
     async def get_channel(self, channel_id: str) -> dict[str, typing.Any] | None:
         async with self.db.execute("SELECT * FROM channels WHERE id = ?", (channel_id,)) as result:
             channel = await result.fetchone()
             return dict(zip(CHANNEL_PARAMETERS, channel)) if channel else None
 
-    async def get_channels(self, search: str | None = None, limit: int | None = None) -> list[dict]:
-        query, params = "SELECT * FROM channels", []
-        if search is not None:
-            query += " WHERE name LIKE ?"
-            params.append(f"%{search}%")
-
-        if limit is not None:
-            query += " LIMIT ?"
-            params.append(limit)
-
-        async with self.db.execute_fetchall(query, params) as channels:
-            return [dict(zip(CHANNEL_PARAMETERS, channel)) for channel in channels]
+    async def get_channels(self, limit: int | None = None, page: int | None = 1) -> tuple[list[dict], int]:
+        return await self._fetch(
+            table = "channels",
+            columns = CHANNEL_PARAMETERS,
+            order_by = "name ASC",
+            limit = limit,
+            page = page
+        )
 
     # Videos
     async def get_video(self, video_id: str) -> dict[str, typing.Any] | None:
@@ -64,18 +100,18 @@ class Database:
             result = await result.fetchone()
             return dict(zip(VIDEO_PARAMETERS, result)) if result else None
 
-    async def get_videos(self, channel_id: str | None = None, limit: int | None = None) -> list[dict]:
-        query, params = f"SELECT {', '.join(VIDEO_PARAMETERS)} FROM videos", []
+    async def get_videos(self, channel_id: str | None = None, limit: int | None = None, page: int | None = 1) -> tuple[list[dict], int]:
+        filters = {}
         if channel_id is not None:
-            query += " WHERE uploader_id = ?"
-            params.append(channel_id)
+            filters["uploader_id"] = channel_id
 
-        query += " ORDER BY timestamp DESC"
-        if limit is not None:
-            query += " LIMIT ?"
-            params.append(limit)
-
-        async with self.db.execute_fetchall(query, params) as results:
-            return [dict(zip(VIDEO_PARAMETERS, row)) for row in results]
+        return await self._fetch(
+            table = "videos",
+            columns = VIDEO_PARAMETERS,
+            filters = filters,
+            order_by = "timestamp DESC",
+            limit = limit,
+            page = page
+    )
 
 db = Database()

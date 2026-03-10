@@ -11,6 +11,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from pydantic import Field
 from humanize import naturaltime
 from starlette.exceptions import HTTPException
 
@@ -34,13 +35,21 @@ templates.env.filters |= {"naturaltime": lambda x: naturaltime(datetime.fromtime
 async def handle_exception(request: Request, exception: HTTPException):
     return templates.TemplateResponse(request, f"errors/{exception.status_code}.jinja2")
 
+# API
+@app.get("/v1/channels")
+async def route_v1_channels(page: typing.Annotated[int, Field(ge = 1)] = 1) -> JSONResponse:
+    channels, total = await db.get_channels(limit = 20, page = page)
+    return JSONResponse({"code": 200, "data": {"channels": channels, "total": total}})
+
+@app.get("/v1/videos")
+async def route_v1_videos(channel_id: str | None = None, page: typing.Annotated[int, Field(ge = 1)] = 1) -> JSONResponse:
+    videos, total = await db.get_videos(channel_id = channel_id, limit = 20, page = page)
+    return JSONResponse({"code": 200, "data": {"videos": videos, "total": total}})
+
 # Routing
 @app.get("/", response_class = HTMLResponse)
 async def route_home(request: Request):
-    return templates.TemplateResponse(request, "pages/home.jinja2", {
-        "videos": await db.get_videos(limit = 12),
-        "channels": await db.get_channels(limit = 8)
-    })
+    return templates.TemplateResponse(request, "pages/home.jinja2")
 
 @app.get("/channel/{channel_id:str}", response_class = HTMLResponse)
 async def route_channel(request: Request, channel_id: str):
