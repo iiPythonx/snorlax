@@ -5,10 +5,10 @@
 
     <!-- Video -->
     {% set URL = "/videos/%s/%s" % (video['uploader_id'], video['id']) %}
-    <video class = "video-js" controls preload = "auto" poster = "{{ URL }}.webp" width = "800" data-setup = "{}">
+    <video-js controls preload = "auto" poster = "{{ URL }}.webp" data-setup = "{}" class = "vjs-fluid">
         <source src = "{{ URL }}.webm" type = "video/webm">
         <track kind = "captions" src = "{{ URL }}.en.vtt" srclang = "en" label = "English" default>
-    </video>
+    </video-js>
 
     <hr>
     <span>

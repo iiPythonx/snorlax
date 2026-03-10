@@ -110,11 +110,15 @@ class Snorlax:
                 raise RuntimeError("failed to extract video entries from channel")
 
             for video in info["entries"]:
-                await self.fetch_video(video["url"])
+                await self.fetch_video(video["url"].split("=")[-1])
 
     async def fetch_video(self, video_id: str) -> None:
+        existing_video = await db.get_video(video_id)
+        if existing_video is not None:
+            return  # Video already exists
+
         info: dict[str, typing.Any] = self.ytdl.extract_info(f"https://youtu.be/{video_id}", download = True)  # type: ignore
-        
+
         # Save everything to database
         channel_id = info["uploader_id"]
         if not await db.channel_exists(channel_id):
