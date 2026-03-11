@@ -96,14 +96,10 @@ class Database:
             return dict(zip(VIDEO_W_CHANNEL_PARAMS, result)) if result else None
 
     async def get_videos(self, channel_id: str | None = None, limit: int | None = None, page: int | None = 1) -> tuple[list[dict], int]:
-        filters = {}
-        if channel_id is not None:
-            filters["channel_id"] = channel_id
-
         return await self._fetch(
             table = "videos_w_channel",
             columns = VIDEO_W_CHANNEL_PARAMS,
-            filters = filters,
+            filters = {"channel_id": channel_id} if channel_id is not None else {},
             order_by = "timestamp DESC",
             limit = limit,
             page = page
