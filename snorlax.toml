@@ -1,0 +1,19 @@
+[snorlax]
+
+    # The path to the SQLite database file
+    database_path = "snorlax.db"
+
+    # The path where video files, cover images, and subtitles will be stored
+    # Ensure it has enough space to hold everything
+    video_path = "./videos"
+
+[videos]
+
+    # Download all English subtitles
+    subtitle_languages = ["en.*"]
+
+    # Fetch Japanese and Spanish subtitles
+    # subtitle_languages = ["ja", "es"]
+
+    # Completely disable subtitle fetching
+    # subtitle_languages = []

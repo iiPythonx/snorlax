@@ -9,8 +9,7 @@ from yt_dlp.utils import DownloadError
 from snorlax.config import config
 from snorlax.database import db, VIDEO_PARAMS
 
-# Path information
-TEMP_PATH = config.VIDEO_PATH / "in_progress"
+TEMP_PATH = config.snorlax.video_path / "in_progress"
 
 class Job:
     def __init__(self, video_id: str) -> None:
@@ -19,7 +18,7 @@ class Job:
             "writesubtitles": True,
             "writethumbnail": True,
             "subtitlesformat": "vtt",
-            "subtitleslangs": ["en.*", "es", "ja"],
+            "subtitleslangs": config.videos.subtitle_languages,
             "remote_components": {"ejs:github"},
             "outtmpl": str(TEMP_PATH / "%(id)s.%(ext)s"),
             "format": "bv*+ba/b",
@@ -75,7 +74,7 @@ class Job:
         await db.add_video(**{k: v for k, v in info.items() if k in VIDEO_PARAMS})  # type: ignore
 
         # Reorganize everything
-        video_path = config.VIDEO_PATH / info["uploader_id"] / self.video_id
+        video_path = config.snorlax.video_path / info["uploader_id"] / self.video_id
         if not video_path.is_dir():
             video_path.mkdir(parents = True)
 

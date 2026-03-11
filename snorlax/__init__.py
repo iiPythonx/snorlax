@@ -13,7 +13,7 @@ from fastapi.templating import Jinja2Templates
 from pydantic import Field
 from starlette.exceptions import HTTPException
 
-from snorlax.config import config
+from snorlax.config import ROOT, config
 from snorlax.ingest import Snorlax
 from snorlax.database import db
 
@@ -27,7 +27,7 @@ async def lifespan(app: FastAPI) -> typing.AsyncGenerator:
 app = FastAPI(openapi_url = None, lifespan = lifespan)
 app.state.snorlax = Snorlax()
 
-templates = Jinja2Templates(directory = config.TEMPLATE_PATH)
+templates = Jinja2Templates(directory = ROOT / "templates")
 
 # Exception processing
 @app.exception_handler(HTTPException)
@@ -126,5 +126,5 @@ async def route_manage(request: Request):
     return templates.TemplateResponse(request, "pages/manage.jinja2")
 
 # Mount /videos
-app.mount("/videos", StaticFiles(directory = config.VIDEO_PATH))
-app.mount("/", StaticFiles(directory = config.STATIC_PATH))
+app.mount("/videos", StaticFiles(directory = config.snorlax.video_path))
+app.mount("/", StaticFiles(directory = ROOT / "static"))

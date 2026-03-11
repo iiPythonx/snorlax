@@ -13,7 +13,7 @@ class Database:
         self.db: aiosqlite.Connection
 
     async def init(self) -> None:
-        self.db = await aiosqlite.connect(config.DATABASE_PATH)
+        self.db = await aiosqlite.connect(config.snorlax.database_path)
 
         # Initialize tables
         await self.db.executescript((ROOT / "database/tables.sql").read_text())
