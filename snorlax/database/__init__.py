@@ -2,9 +2,11 @@
 
 import typing
 import aiosqlite
+from pathlib import Path
 
-VIDEO_PARAMETERS = ("id", "title", "description", "view_count", "like_count", "duration_string", "timestamp", "uploader_id", "caption_langs", "uploader")
-CHANNEL_PARAMETERS = ("id", "name", "subscribers")
+VIDEO_PARAMS           = ("id", "title", "description", "view_count", "like_count", "duration_string", "timestamp", "channel_id", "caption_langs")
+VIDEO_W_CHANNEL_PARAMS = VIDEO_PARAMS + ("channel_name",)
+CHANNEL_PARAMS         = ("id", "name", "subscribers")
 
 class Database:
     def __init__(self) -> None:
@@ -12,39 +14,14 @@ class Database:
 
     async def init(self) -> None:
         self.db = await aiosqlite.connect("snorlax.db")
-        await self.db.execute("""CREATE TABLE IF NOT EXISTS channels (
-            id          TEXT PRIMARY KEY,
-            name        TEXT,
-            subscribers INTEGER
-        )""")
-        await self.db.execute("""CREATE TABLE IF NOT EXISTS videos (
-            id              TEXT PRIMARY KEY,
-            title           TEXT,
-            description     TEXT,
-            view_count      INTEGER,
-            like_count      INTEGER,
-            duration_string TEXT,
-            timestamp       INTEGER,
-            uploader_id     TEXT,
-            caption_langs   TEXT,
-            uploader        TEXT
-        )""")
+
+        # Initialize tables
+        await self.db.executescript(Path(__file__).parent / "tables.sql")
         await self.db.commit()
 
-    async def write(self) -> None:
+    async def close(self) -> None:
         await self.db.commit()
         await self.db.close()
-
-    async def add_channel(self, id: str, name: str, subscribers: int) -> None:
-        await self.db.execute("INSERT INTO channels VALUES (?, ?, ?)", (id, name, subscribers))
-        await self.db.commit()
-
-    async def add_video(self, **video) -> None:
-        await self.db.execute(
-            f"INSERT INTO videos ({', '.join(VIDEO_PARAMETERS)}) VALUES ({', '.join('?' for _ in VIDEO_PARAMETERS)})",
-            tuple(video[p] for p in VIDEO_PARAMETERS)
-        )
-        await self.db.commit()
 
     # Querying
     async def _fetch(
@@ -87,34 +64,45 @@ class Database:
             return [dict(zip(columns, row)) for row in rows], count_result[0]
 
     # Channels
+    async def add_channel(self, id: str, name: str, subscribers: int) -> None:
+        await self.db.execute("INSERT OR IGNORE INTO channels VALUES (?, ?, ?)", (id, name, subscribers))
+        await self.db.commit()
+
     async def get_channel(self, channel_id: str) -> dict[str, typing.Any] | None:
         async with self.db.execute("SELECT * FROM channels WHERE id = ?", (channel_id,)) as result:
             channel = await result.fetchone()
-            return dict(zip(CHANNEL_PARAMETERS, channel)) if channel else None
+            return dict(zip(CHANNEL_PARAMS, channel)) if channel else None
 
     async def get_channels(self, limit: int | None = None, page: int | None = 1) -> tuple[list[dict], int]:
         return await self._fetch(
             table = "channels",
-            columns = CHANNEL_PARAMETERS,
+            columns = CHANNEL_PARAMS,
             order_by = "name ASC",
             limit = limit,
             page = page
         )
 
     # Videos
+    async def add_video(self, **video) -> None:
+        await self.db.execute(
+            f"INSERT OR IGNORE INTO videos ({', '.join(VIDEO_PARAMS)}) VALUES ({', '.join('?' for _ in VIDEO_PARAMS)})",
+            tuple(video[p] for p in VIDEO_PARAMS)
+        )
+        await self.db.commit()
+
     async def get_video(self, video_id: str) -> dict[str, typing.Any] | None:
-        async with self.db.execute("SELECT * FROM videos WHERE id = ?", (video_id,)) as result:
+        async with self.db.execute("SELECT * FROM videos_w_channel WHERE id = ?", (video_id,)) as result:
             result = await result.fetchone()
-            return dict(zip(VIDEO_PARAMETERS, result)) if result else None
+            return dict(zip(VIDEO_W_CHANNEL_PARAMS, result)) if result else None
 
     async def get_videos(self, channel_id: str | None = None, limit: int | None = None, page: int | None = 1) -> tuple[list[dict], int]:
         filters = {}
         if channel_id is not None:
-            filters["uploader_id"] = channel_id
+            filters["channel_id"] = channel_id
 
         return await self._fetch(
-            table = "videos",
-            columns = VIDEO_PARAMETERS,
+            table = "videos_w_channel",
+            columns = VIDEO_W_CHANNEL_PARAMS,
             filters = filters,
             order_by = "timestamp DESC",
             limit = limit,

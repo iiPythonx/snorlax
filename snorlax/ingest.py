@@ -5,7 +5,7 @@ from pathlib import Path
 
 from yt_dlp import YoutubeDL
 
-from snorlax.database import db, VIDEO_PARAMETERS
+from snorlax.database import db, VIDEO_PARAMS
 
 # Handle snoring and laxing
 class Snorlax:
@@ -48,7 +48,7 @@ class Snorlax:
             await db.add_channel(channel_id, info["uploader"], info["channel_follower_count"])
 
         info["caption_langs"] = ",".join(info["subtitles"].keys())
-        await db.add_video(*map(info.get, VIDEO_PARAMETERS))  # type: ignore
+        await db.add_video(*map(info.get, VIDEO_PARAMS))  # type: ignore
 
         # Reorganize everything
         video_path = self.video_path / channel_id / video_id
