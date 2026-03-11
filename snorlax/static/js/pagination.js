@@ -28,7 +28,7 @@ import { humanizeTime } from "./humanize.js";
                                 <span class = "duration-string">${item.duration_string}</span>
                                 <span>${item.title}</span>
                             </a>
-                            <span>${item.channel_name}</span> <br>
+                            <a href = "/channel/${item.channel_id}">${item.channel_name}</a>
                             <span>${item.view_count.toLocaleString()} views • ${humanizeTime(item.timestamp)}</span>
                         `;
                         break;

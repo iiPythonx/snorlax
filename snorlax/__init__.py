@@ -22,12 +22,14 @@ from snorlax.database import db
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> typing.AsyncGenerator:
     await db.init()
+
+    app.state.snorlax = Snorlax()
+    asyncio.create_task(app.state.snorlax.process_queue())
+
     yield
     await db.close()
 
 app = FastAPI(openapi_url = None, lifespan = lifespan)
-app.state.snorlax = Snorlax()
-
 templates = Jinja2Templates(directory = ROOT / "templates")
 
 # Exception processing
@@ -93,8 +95,8 @@ async def route_v1_jobs(websocket: WebSocket) -> None:
     try:
         while websocket.application_state == WebSocketState.CONNECTED:
             match await websocket.receive_json():
-                case {"type": "remove-job", "id": video_id}:
-                    app.state.snorlax.remove_job(video_id)
+                case {"type": "cancel-job", "id": video_id}:
+                    await app.state.snorlax.cancel_job(video_id)
 
                 case {"type": "add-video-job", "id": video_id}:
                     await app.state.snorlax.fetch_video(video_id)

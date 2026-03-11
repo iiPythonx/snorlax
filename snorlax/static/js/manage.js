@@ -19,7 +19,7 @@ ws.addEventListener("message", (e) => {
         element.innerHTML = `
             <div class = "flex">
                 <a href = "/watch/${id}">${data.title}</a>
-                ${finished ? '<button class = "pad-left">Remove Job</button>' : ''}
+                <button class = "pad-left">${finished ? 'Remove' : 'Cancel'} Job</button>
             </div>
             <div class = "flex">
                 ${data.status === "failed" ? "failed, check server console for details" : `
@@ -33,8 +33,8 @@ ws.addEventListener("message", (e) => {
         joblist.appendChild(element);
 
         // Job removal
-        if (finished) element.querySelector("button").addEventListener("click", () => {
-            ws.send(JSON.stringify({ type: "remove-job", id }));
+        element.querySelector("button").addEventListener("click", () => {
+            ws.send(JSON.stringify({ type: "cancel-job", id }));
             element.remove();
         });
     }
