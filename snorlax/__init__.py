@@ -79,8 +79,8 @@ async def print_job_updates(websocket: WebSocket) -> None:
         })
         await asyncio.sleep(2)
 
-@app.websocket("/v1/jobs/status")
-async def route_v1_job_status(websocket: WebSocket) -> None:
+@app.websocket("/v1/jobs")
+async def route_v1_jobs(websocket: WebSocket) -> None:
     await websocket.accept()
     task = asyncio.create_task(print_job_updates(websocket))
     

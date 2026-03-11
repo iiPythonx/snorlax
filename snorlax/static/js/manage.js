@@ -1,7 +1,7 @@
 import { humanizeTime } from "./humanize.js";
 
 // Handle job listing
-const ws = new WebSocket("/v1/jobs/status");
+const ws = new WebSocket("/v1/jobs");
 const joblist = document.getElementById("job-list");
 
 ws.addEventListener("message", (e) => {

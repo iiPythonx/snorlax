@@ -9,20 +9,17 @@ uv run uvicorn snorlax:app
 
 ### Management
 
-Replicate a video from YouTube into Snorlax:
+Head to `/manage` and you can add a import job, which currently supports both videos and channels.
 
-```sh
-curl -X POST http://localhost:8000/download/video/YT_VIDEO_ID
+### API
+
 ```
-
-Replicate a channel from YouTube into Snorlax:
-
-```sh
-curl -X POST http://localhost:8000/download/channel/YT_CHANNEL_ID
+/v1/videos
+/v1/channels
+/v1/video/VIDEO_ID
+/v1/channel/CHANNEL_ID
+/v1/jobs
 ```
-
-> [!NOTE]
-> These endpoints are subject to change as the API develops.
 
 ### Screenshot
 
@@ -31,4 +28,4 @@ curl -X POST http://localhost:8000/download/channel/YT_CHANNEL_ID
 ### Roadmap
 
 - [x] Migrate /watch to an API endpoint, with JS-based humanize
-- [ ] Migrate the ingest methods to custom API endpoints
+- [x] Migrate the ingest methods to custom API endpoints
