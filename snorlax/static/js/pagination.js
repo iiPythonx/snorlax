@@ -23,13 +23,15 @@ import { humanizeTime } from "./humanize.js";
                 switch (type) {
                     case "video":
                         element.innerHTML = `
-                            <a href = "/watch/${item.id}" style = "position: relative;">
+                            <a href = "/watch/${item.id}" class = "video-poster flex column">
                                 <img src = "/videos/${item.channel_id}/${item.id}/cover.webp">
                                 <span class = "duration-string">${item.duration_string}</span>
                                 <span>${item.title}</span>
                             </a>
-                            <a href = "/channel/${item.channel_id}">${item.channel_name}</a>
-                            <span>${item.view_count.toLocaleString()} views • ${humanizeTime(item.timestamp)}</span>
+                            <div>
+                                <a href = "/channel/${item.channel_id}" class = "silent">${item.channel_name}</a> <br>
+                                <span>${item.view_count.toLocaleString()} views • ${humanizeTime(item.timestamp)}</span>
+                            </div>
                         `;
                         break;
     

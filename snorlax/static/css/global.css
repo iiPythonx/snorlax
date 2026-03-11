@@ -26,6 +26,16 @@ pre {
     text-wrap: wrap;
 }
 
+/* Link styling */
+a.silent {
+    width: fit-content;
+    text-decoration: none;
+    
+    &:hover {
+        text-decoration: underline dashed;
+    }
+}
+
 /* Button styling */
 button {
     background: none;
@@ -54,14 +64,13 @@ button {
 
     article {
         width: 300px;
-
-        a {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            margin-bottom: 5px;
-        }
     }
+}
+
+.video-poster {
+    gap: 5px;
+    position: relative;
+    margin-bottom: 5px;
 }
 
 .duration-string {
@@ -80,13 +89,7 @@ button {
 /* Snorlax title */
 .snorlax-head {
     align-items: center;
-    a {
-        text-decoration: none;
 
-        &:hover {
-            text-decoration: underline dashed;
-        }
-    }
     h2 {
         display: flex;
         align-items: center;
@@ -96,6 +99,7 @@ button {
             rotate: 360deg;
         }
     }
+
     img {
         image-rendering: pixelated;
         height: 24px;
