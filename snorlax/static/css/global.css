@@ -87,4 +87,18 @@ button {
             text-decoration: underline dashed;
         }
     }
+    h2 {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        &:hover img {
+            rotate: 360deg;
+        }
+    }
+    img {
+        image-rendering: pixelated;
+        height: 24px;
+        transition: rotate 1s ease;
+    }
 }
