@@ -64,3 +64,11 @@ div[data-api-type = "channel"] .item-list {
         }
     }
 }
+
+.duration-string {
+    position: absolute;
+    right: 0px;
+    top: 152px;
+    padding: 0px 4px;
+    background: #282828bb;
+}
