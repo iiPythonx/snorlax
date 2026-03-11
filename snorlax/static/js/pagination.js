@@ -45,18 +45,23 @@ import { humanizeTime } from "./humanize.js";
     
         // Handle interface
         const indicator = list.querySelector("& > article span");
+        const btn_back = list.querySelector(".btn-back"), btn_next = list.querySelector(".btn-next");
+
         async function update() {
             await load();
             indicator.innerText = `| Page ${page} / ${total} |`;
+
+            btn_back.disabled = page === 1;
+            btn_next.disabled = page === total;
         }
     
         update();
 
         // Handle buttons
-        list.querySelector(".btn-back").addEventListener("click", () => {
+        btn_back.addEventListener("click", () => {
             if (page > 1) { page--; update(); };
         });
-        list.querySelector(".btn-next").addEventListener("click", () => {
+        btn_next.addEventListener("click", () => {
             if (page + 1 <= total) { page++; update(); }
         });
     }

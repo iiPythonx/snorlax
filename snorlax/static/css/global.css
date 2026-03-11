@@ -33,6 +33,11 @@ button {
     border: none;
     cursor: pointer;
     padding: 0px;
+
+    &[disabled] {
+        opacity: .6;
+        cursor: not-allowed;
+    }
 }
 
 /* Structuring */
