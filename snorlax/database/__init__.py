@@ -2,7 +2,7 @@
 
 import typing
 import aiosqlite
-from pathlib import Path
+from snorlax.config import ROOT, config
 
 VIDEO_PARAMS           = ("id", "title", "description", "view_count", "like_count", "duration_string", "timestamp", "channel_id", "caption_langs")
 VIDEO_W_CHANNEL_PARAMS = VIDEO_PARAMS + ("channel_name",)
@@ -13,10 +13,10 @@ class Database:
         self.db: aiosqlite.Connection
 
     async def init(self) -> None:
-        self.db = await aiosqlite.connect("snorlax.db")
+        self.db = await aiosqlite.connect(config.DATABASE_PATH)
 
         # Initialize tables
-        await self.db.executescript((Path(__file__).parent / "tables.sql").read_text())
+        await self.db.executescript((ROOT / "database/tables.sql").read_text())
         await self.db.commit()
 
     async def close(self) -> None:

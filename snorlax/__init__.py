@@ -2,7 +2,6 @@
 
 # Modules
 import typing
-from pathlib import Path
 from contextlib import asynccontextmanager
 
 from fastapi import BackgroundTasks, Depends, FastAPI, Request
@@ -13,6 +12,7 @@ from fastapi.templating import Jinja2Templates
 from pydantic import Field
 from starlette.exceptions import HTTPException
 
+from snorlax.config import config
 from snorlax.ingest import Snorlax
 from snorlax.database import db
 
@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI) -> typing.AsyncGenerator:
 app = FastAPI(openapi_url = None, lifespan = lifespan)
 app.state.snorlax = Snorlax()
 
-templates = Jinja2Templates(directory = Path(__file__).parent / "templates")
+templates = Jinja2Templates(directory = config.TEMPLATE_PATH)
 
 # Exception processing
 @app.exception_handler(HTTPException)
@@ -99,5 +99,5 @@ async def route_download_channel(channel_id: str, background_tasks: BackgroundTa
     return JSONResponse({"code": 202})
 
 # Mount /videos
-app.mount("/videos", StaticFiles(directory = app.state.snorlax.video_path))
-app.mount("/", StaticFiles(directory = Path(__file__).parent / "static"))
+app.mount("/videos", StaticFiles(directory = config.VIDEO_PATH))
+app.mount("/", StaticFiles(directory = config.STATIC_PATH))
