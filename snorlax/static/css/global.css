@@ -71,6 +71,10 @@ button {
     gap: 5px;
     position: relative;
     margin-bottom: 5px;
+
+    img {
+        aspect-ratio: 16 / 9;
+    }
 }
 
 .duration-string {
