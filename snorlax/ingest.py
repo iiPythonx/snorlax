@@ -17,8 +17,9 @@ class Job:
         self.video_id = video_id
         self.ytdl = YoutubeDL({
             "writesubtitles": True,
-            "allsubtitles": True,
             "writethumbnail": True,
+            "subtitlesformat": "vtt",
+            "subtitleslangs": ["en.*", "es", "ja"],
             "remote_components": {"ejs:github"},
             "outtmpl": str(TEMP_PATH / "%(id)s.%(ext)s"),
             "format": "bv*+ba/b",
@@ -70,7 +71,7 @@ class Job:
         if await db.get_channel(info["uploader_id"]) is None:
             await db.add_channel(info["uploader_id"], info["uploader"], info["channel_follower_count"])
 
-        info |= {"caption_langs": ",".join(info["subtitles"].keys()), "channel_id": info["uploader_id"]}
+        info |= {"caption_langs": ",".join(info["requested_subtitles"].keys()), "channel_id": info["uploader_id"]}
         await db.add_video(**{k: v for k, v in info.items() if k in VIDEO_PARAMS})  # type: ignore
 
         # Reorganize everything

@@ -18,7 +18,7 @@ ws.addEventListener("message", (e) => {
         const element = document.createElement("article");
         element.innerHTML = `
             <div class = "flex">
-                <span>${data.title}</span>
+                <a href = "/watch/${id}">${data.title}</a>
                 ${finished ? '<button class = "pad-left">Remove Job</button>' : ''}
             </div>
             <div class = "flex">
