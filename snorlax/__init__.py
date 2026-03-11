@@ -10,6 +10,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from fastapi.websockets import WebSocketState
 from pydantic import Field
 from starlette.exceptions import HTTPException
 
@@ -90,7 +91,7 @@ async def route_v1_jobs(websocket: WebSocket) -> None:
     
     # Receive client data
     try:
-        while True:
+        while websocket.state == WebSocketState.CONNECTED:
             match await websocket.receive_json():
                 case {"type": "remove-job", "id": video_id}:
                     app.state.snorlax.remove_job(video_id)
