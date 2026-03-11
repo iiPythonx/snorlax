@@ -91,7 +91,7 @@ async def route_v1_jobs(websocket: WebSocket) -> None:
     
     # Receive client data
     try:
-        while websocket.state == WebSocketState.CONNECTED:
+        while websocket.application_state == WebSocketState.CONNECTED:
             match await websocket.receive_json():
                 case {"type": "remove-job", "id": video_id}:
                     app.state.snorlax.remove_job(video_id)
