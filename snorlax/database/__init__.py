@@ -16,7 +16,7 @@ class Database:
         self.db = await aiosqlite.connect("snorlax.db")
 
         # Initialize tables
-        await self.db.executescript(Path(__file__).parent / "tables.sql")
+        await self.db.executescript((Path(__file__).parent / "tables.sql").read_text())
         await self.db.commit()
 
     async def close(self) -> None:

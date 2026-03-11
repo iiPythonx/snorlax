@@ -24,11 +24,11 @@ import { humanizeTime } from "./humanize.js";
                     case "video":
                         element.innerHTML = `
                             <a href = "/watch/${item.id}" style = "position: relative;">
-                                <img src = "/videos/${item.uploader_id}/${item.id}/cover.webp">
+                                <img src = "/videos/${item.channel_id}/${item.id}/cover.webp">
                                 <span class = "duration-string">${item.duration_string}</span>
                                 <span>${item.title}</span>
                             </a>
-                            <span>${item.uploader}</span> <br>
+                            <span>${item.channel_name}</span> <br>
                             <span>${item.view_count.toLocaleString()} views • ${humanizeTime(item.timestamp)}</span>
                         `;
                         break;

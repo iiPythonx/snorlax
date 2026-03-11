@@ -9,14 +9,14 @@ if (response.code !== 200) {
     MAIN_ELEMENT.innerHTML = "<p>404: Not Found</p><a href = '/'>Click here to head back to the homepage.</a>";
 } else {
     const video = response.data;
-    const channel = (await (await fetch(`/v1/channel/${video.uploader_id}`)).json()).data;
+    const channel = (await (await fetch(`/v1/channel/${video.channel_id}`)).json()).data;
 
     // Description
     let description = video.description.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     description = description.replace(/(https?:\/\/[^\s]+)/g, `<a href = "$1" target = "_blank" rel = "noopener noreferrer">$1</a>`);
 
     // Render HTML
-    const url = `/videos/${video.uploader_id}/${video.id}`;
+    const url = `/videos/${video.channel_id}/${video.id}`;
     MAIN_ELEMENT.innerHTML = `
         <h2>${video.title}</h2>
         <hr>
