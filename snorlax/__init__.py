@@ -73,11 +73,15 @@ async def route_v1_video(video_id: str) -> JSONResponse:
 
 async def print_job_updates(websocket: WebSocket) -> None:
     while True:
-        await websocket.send_json({
-            video_id: job.get_progress()
-            for video_id, job in app.state.snorlax.jobs.items()
-        })
-        await asyncio.sleep(2)
+        try:
+            await websocket.send_json({
+                video_id: job.get_progress()
+                for video_id, job in app.state.snorlax.jobs.items()
+            })
+            await asyncio.sleep(2)
+
+        except WebSocketDisconnect:
+            break
 
 @app.websocket("/v1/jobs")
 async def route_v1_jobs(websocket: WebSocket) -> None:

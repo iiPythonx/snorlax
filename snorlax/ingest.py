@@ -4,6 +4,7 @@ import typing
 import asyncio
 
 from yt_dlp import YoutubeDL
+from yt_dlp.utils import DownloadError
 
 from snorlax.config import config
 from snorlax.database import db, VIDEO_PARAMS
@@ -20,8 +21,10 @@ class Job:
             "writethumbnail": True,
             "remote_components": {"ejs:github"},
             "outtmpl": str(TEMP_PATH / "%(id)s.%(ext)s"),
-            "format": "bestvideo+bestaudio",
+            "format": "bv*+ba/b",
             "progress_hooks": [self._progress_hook],
+            "merge_output_format": "mkv",
+            "remux_video": "mkv",
             "quiet": True
         })  # type: ignore
 
@@ -56,7 +59,12 @@ class Job:
         if existing_video is not None:
             return  # The video already exists
 
-        info: dict[str, typing.Any] = await asyncio.to_thread(self.ytdl.extract_info, f"https://youtu.be/{self.video_id}", download = True)  # type: ignore
+        try:
+            info: dict[str, typing.Any] = await asyncio.to_thread(self.ytdl.extract_info, f"https://youtu.be/{self.video_id}", download = True)  # type: ignore
+
+        except DownloadError:
+            self._progress = {"progress": 0, "status": "failed", "title": self.video_id}
+            return
 
         # Save everything to database
         if await db.get_channel(info["uploader_id"]) is None:
@@ -74,7 +82,7 @@ class Job:
             if self.video_id not in file.name:
                 continue
 
-            file.rename(video_path / file.name.replace(self.video_id, {".webp": "cover", ".vtt": "sub", ".webm": "video"}[file.suffix]))
+            file.rename(video_path / file.name.replace(self.video_id, {".webp": "cover", ".vtt": "sub", ".mkv": "video"}[file.suffix]))
 
 # Handle snoring and laxing
 class Snorlax:

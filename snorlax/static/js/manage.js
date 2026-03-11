@@ -8,6 +8,7 @@ ws.addEventListener("message", (e) => {
     joblist.innerHTML = "";
     for (const [id, data] of Object.entries(JSON.parse(e.data))) {
         if (!data.status) continue;
+        const finished = ["finished", "failed"].includes(data.status);
 
         // Progress calculation
         const completed_amount = Math.round(20 * (data.progress / 100));
@@ -18,11 +19,13 @@ ws.addEventListener("message", (e) => {
         element.innerHTML = `
             <div class = "flex">
                 <span>${data.title}</span>
-                ${data.status === 'finished' ? '<button class = "pad-left">Remove Job</button>' : ''}
+                ${finished ? '<button class = "pad-left">Remove Job</button>' : ''}
             </div>
             <div class = "flex">
-                <a href = "/channel/${data.channel_id}">${data.channel}</a> •
-                ${humanizeTime(data.timestamp)} • ${data.status} ${data.status === 'downloading' ? `• ${data.speed} MiB/s • ETA ${data.eta}s` : ''}
+                ${data.status === "failed" ? "failed, check server console for details" : `
+                    <a href = "/channel/${data.channel_id}">${data.channel}</a> •
+                    ${humanizeTime(data.timestamp)} • ${data.status} ${data.status === 'downloading' ? `• ${data.speed} MiB/s • ETA ${data.eta}s` : ''}
+                `}
                 <pre class = "pad-left">[${'='.repeat(completed_amount)}${' '.repeat(progress_spacing)}] ${data.progress}%</pre>
             </div>
             <br> <hr>
@@ -30,7 +33,7 @@ ws.addEventListener("message", (e) => {
         joblist.appendChild(element);
 
         // Job removal
-        if (data.status === "finished") element.querySelector("button").addEventListener("click", () => {
+        if (finished) element.querySelector("button").addEventListener("click", () => {
             ws.send(JSON.stringify({ type: "remove-job", id }));
             element.remove();
         });
@@ -38,7 +41,7 @@ ws.addEventListener("message", (e) => {
 });
 
 // Handle adding jobs
-const regex = { video: /(?:\.be\/|\?v=)([\w-]+)/, channel: /(?:\/@|l\/)([\w@-]+)/ };
+const regex = { video: /(?:\.be\/|\?v=)([\w-]+)/, channel: /(?:\/@|l\/)([\w-]+)/ };
 document.getElementById("btn-add-job").addEventListener("click", () => {
     const url = prompt("Target URL (video/channel url)");
     if (!url) return;
@@ -55,5 +58,5 @@ document.getElementById("btn-add-job").addEventListener("click", () => {
     if (!type) return alert("URL could not be processed.");
 
     // Send off job
-    ws.send(JSON.stringify({ type: `add-${type}-job`, id }));
+    ws.send(JSON.stringify({ type: `add-${type}-job`, id: type === "channel" ? `@${id}` : id }));
 });

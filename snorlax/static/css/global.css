@@ -74,10 +74,13 @@ button {
 }
 
 /* Snorlax title */
-.snorlax-head a {
-    text-decoration: none;
+.snorlax-head {
+    align-items: center;
+    a {
+        text-decoration: none;
 
-    &:hover {
-        text-decoration: underline dashed;
+        &:hover {
+            text-decoration: underline dashed;
+        }
     }
 }

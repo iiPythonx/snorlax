@@ -24,7 +24,7 @@ if (response.code !== 200) {
         <hr>
         <h2>${video.title}</h2>
         <video-js controls preload = "auto" poster = "${url}/cover.webp" data-setup = "{}" class = "vjs-fluid">
-            <source src = "${url}/video.webm" type = "video/webm">
+            <source src = "${url}/video.mkv" type = "video/matroska">
         </video-js>
         <hr>
         <span>
