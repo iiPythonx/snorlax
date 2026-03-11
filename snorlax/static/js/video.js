@@ -1,7 +1,7 @@
 import { humanizeTime } from "./humanize.js";
 
 const VIDEO_ID = window.location.pathname.split("/")[2];
-const MAIN_ELEMENT = document.querySelector("main");
+const MAIN_ELEMENT = document.getElementById("video-page");
 
 // Fetch video data
 const response = await (await fetch(`/v1/video/${VIDEO_ID}`)).json();
@@ -18,10 +18,6 @@ if (response.code !== 200) {
     // Render HTML
     const url = `/videos/${video.channel_id}/${video.id}`;
     MAIN_ELEMENT.innerHTML = `
-        <section>
-            <h2><a href = "/">Snorlax</a></h2>
-        </section>
-        <hr>
         <h2>${video.title}</h2>
         <video-js controls preload = "auto" poster = "${url}/cover.webp" data-setup = "{}" class = "vjs-fluid">
             <source src = "${url}/video.mkv" type = "video/matroska">

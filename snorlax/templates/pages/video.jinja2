@@ -2,6 +2,10 @@
 {% block meta %}
     <link href = "https://cdn.jsdelivr.net/npm/video.js/dist/video-js.min.css" rel = "stylesheet" />
 {% endblock %}
+{% block content %}
+    {% include "macros/header.jinja2" %}
+    <div id = "video-page" class = "flex column main"></div>
+{% endblock %}
 {% block scripts %}
     <script src = "https://cdn.jsdelivr.net/npm/video.js/dist/video.min.js"></script>
     <script src = "/js/video.js" type = "module"></script>

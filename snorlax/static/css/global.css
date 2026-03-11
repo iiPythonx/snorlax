@@ -15,10 +15,6 @@ main {
     width: 1230px;
     height: fit-content;
     margin-top: 55px;
-
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
 }
 hr {
     border-color: #535353;
@@ -47,6 +43,9 @@ button {
 }
 .column {
     flex-direction: column;
+}
+.main {
+    gap: 20px;
 }
 
 /* Item listings */
