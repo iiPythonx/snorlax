@@ -2,10 +2,11 @@
 {% from "macros/paginate.jinja2" import paginate %}
 
 {% block content %}
-    <div>
+    {% include "macros/header.jinja2" %}
+    <section>
         <h2>{{ channel["name"] }}</h2>
         <span style = "line-height: 2;">{{ "{:,}".format(channel["subscribers"]) }} subscribers</span>
-    </div>
+    </section>
     <hr>
     {{ paginate("video", "channel_id=" ~ channel["id"]) }}
 {% endblock %}

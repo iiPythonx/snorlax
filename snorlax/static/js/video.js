@@ -18,14 +18,14 @@ if (response.code !== 200) {
     // Render HTML
     const url = `/videos/${video.channel_id}/${video.id}`;
     MAIN_ELEMENT.innerHTML = `
-        <h2>${video.title}</h2>
+        <section>
+            <h2><a href = "/">Snorlax</a></h2>
+        </section>
         <hr>
-
-        <!-- Video -->
+        <h2>${video.title}</h2>
         <video-js controls preload = "auto" poster = "${url}/cover.webp" data-setup = "{}" class = "vjs-fluid">
             <source src = "${url}/video.webm" type = "video/webm">
         </video-js>
-
         <hr>
         <span>
             <a href = "/channel/${channel.id}">${channel.name}</a> (${channel.subscribers.toLocaleString()} subscribers) <br>

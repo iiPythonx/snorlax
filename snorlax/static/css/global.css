@@ -14,7 +14,7 @@ body {
 main {
     width: 1230px;
     height: fit-content;
-    margin-top: 100px;
+    margin-top: 55px;
 
     display: flex;
     flex-direction: column;
@@ -45,13 +45,8 @@ button {
 }
 
 /* Item listings */
-div[data-api-type = "channel"] .item-list {
-    height: 148px;
-}
-
 .item-list {
     flex-wrap: wrap;
-    height: 470px;
 
     article {
         width: 300px;
@@ -71,4 +66,18 @@ div[data-api-type = "channel"] .item-list {
     top: 152px;
     padding: 0px 4px;
     background: #282828bb;
+}
+
+/* Manage page */
+.pad-left {
+    margin-left: auto;
+}
+
+/* Snorlax title */
+.snorlax-head a {
+    text-decoration: none;
+
+    &:hover {
+        text-decoration: underline dashed;
+    }
 }

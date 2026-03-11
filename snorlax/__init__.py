@@ -2,9 +2,10 @@
 
 # Modules
 import typing
+import asyncio
 from contextlib import asynccontextmanager
 
-from fastapi import BackgroundTasks, Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -70,6 +71,35 @@ async def route_v1_video(video_id: str) -> JSONResponse:
 
     return JSONResponse({"code": 200, "data": video_data})
 
+async def print_job_updates(websocket: WebSocket) -> None:
+    while True:
+        await websocket.send_json({
+            video_id: job.get_progress()
+            for video_id, job in app.state.snorlax.jobs.items()
+        })
+        await asyncio.sleep(2)
+
+@app.websocket("/v1/jobs/status")
+async def route_v1_job_status(websocket: WebSocket) -> None:
+    await websocket.accept()
+    task = asyncio.create_task(print_job_updates(websocket))
+    
+    # Receive client data
+    try:
+        while True:
+            match await websocket.receive_json():
+                case {"type": "remove-job", "id": video_id}:
+                    app.state.snorlax.remove_job(video_id)
+
+                case {"type": "add-video-job", "id": video_id}:
+                    await app.state.snorlax.fetch_video(video_id)
+
+                case {"type": "add-channel-job", "id": channel_id}:
+                    await app.state.snorlax.fetch_channel(channel_id)
+
+    except WebSocketDisconnect:
+        task.cancel()
+
 # Routing
 @app.get("/", response_class = HTMLResponse)
 async def route_home(request: Request):
@@ -87,16 +117,9 @@ async def route_channel(request: Request, channel_id: str):
 async def route_watch(request: Request, video_id: str):
     return templates.TemplateResponse(request, "pages/video.jinja2")
 
-# Download routes
-@app.post("/download/video/{video_id:str}")
-async def route_download_video(video_id: str, background_tasks: BackgroundTasks) -> JSONResponse:
-    background_tasks.add_task(app.state.snorlax.fetch_video, video_id)
-    return JSONResponse({"code": 202})
-
-@app.post("/download/channel/{channel_id:str}")
-async def route_download_channel(channel_id: str, background_tasks: BackgroundTasks) -> JSONResponse:
-    background_tasks.add_task(app.state.snorlax.fetch_channel, channel_id)
-    return JSONResponse({"code": 202})
+@app.get("/manage", response_class = HTMLResponse)
+async def route_manage(request: Request):
+    return templates.TemplateResponse(request, "pages/manage.jinja2")
 
 # Mount /videos
 app.mount("/videos", StaticFiles(directory = config.VIDEO_PATH))

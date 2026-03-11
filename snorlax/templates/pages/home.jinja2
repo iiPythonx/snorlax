@@ -2,10 +2,7 @@
 {% from "macros/paginate.jinja2" import paginate %}
 
 {% block content %}
-    <section>
-        <h2>Snorlax</h2>
-    </section>
-    <hr>
+    {% include "macros/header.jinja2" %}
     <section class = "flex column">
         <h2>Channels</h2>
         {{ paginate("channel", "", 16) }}
