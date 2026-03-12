@@ -1,8 +1,9 @@
 CREATE TABLE IF NOT EXISTS channels (
-    id          TEXT PRIMARY KEY,
-    handle      TEXT UNIQUE,
-    name        TEXT,
-    subscribers INTEGER
+    id           TEXT PRIMARY KEY,
+    handle       TEXT UNIQUE,
+    name         TEXT,
+    subscribers  INTEGER,
+    preferred_id TEXT GENERATED ALWAYS AS (COALESCE(handle, id)) VIRTUAL
 );
 
 CREATE TABLE IF NOT EXISTS videos (
@@ -22,6 +23,6 @@ CREATE VIEW IF NOT EXISTS videos_w_channel AS
 SELECT
     v.*,
     c.name AS channel_name,
-    c.handle as channel_handle
+    c.preferred_id AS channel_preferred_id
 FROM videos v
 JOIN channels c ON v.channel_id = c.id;

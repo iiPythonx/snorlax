@@ -24,7 +24,7 @@ if (response.code !== 200) {
         </video-js>
         <hr>
         <span>
-            <a href = "/channel/${channel.handle || channel.id}">${channel.name}</a> (${channel.subscribers.toLocaleString()} subscribers) <br>
+            <a href = "/channel/${channel.preferred_id}">${channel.name}</a> (${channel.subscribers.toLocaleString()} subscribers) <br>
             ${video.duration_string} • ${video.view_count.toLocaleString()} views • ${video.like_count.toLocaleString()} likes • ${humanizeTime(video.timestamp)}
         </span>
         <hr>

@@ -45,8 +45,7 @@ class Job:
             "status": data["status"],
             "title": data["info_dict"]["title"],
             "channel": data["info_dict"]["uploader"],
-            "channel_handle": data["info_dict"].get("uploader_id"),
-            "channel_id": data["info_dict"]["channel_id"],
+            "channel_preferred_id": data["info_dict"].get("uploader_id") or data["info_dict"]["channel_id"],
             "timestamp": data["info_dict"]["timestamp"],
             "speed": round((data["speed"] or 0) / (1024 ** 2), 2),
             "eta": round((data["total_bytes"] - data["downloaded_bytes"]) / (data["speed"] or 0.1))

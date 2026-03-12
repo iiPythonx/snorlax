@@ -5,8 +5,8 @@ import aiosqlite
 from snorlax.config import ROOT, config
 
 VIDEO_PARAMS           = ("id", "title", "description", "view_count", "like_count", "duration_string", "timestamp", "channel_id", "caption_langs")
-VIDEO_W_CHANNEL_PARAMS = VIDEO_PARAMS + ("channel_name", "channel_handle")
-CHANNEL_PARAMS         = ("id", "handle", "name", "subscribers")
+VIDEO_W_CHANNEL_PARAMS = VIDEO_PARAMS + ("channel_name", "channel_preferred_id")
+CHANNEL_PARAMS         = ("id", "handle", "name", "subscribers", "preferred_id")
 
 class Database:
     def __init__(self) -> None:
