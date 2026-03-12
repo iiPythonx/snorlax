@@ -19,12 +19,12 @@ if (response.code !== 200) {
     const url = `/videos/${video.channel_id}/${video.id}`;
     MAIN_ELEMENT.innerHTML = `
         <h2>${video.title}</h2>
-        <video-js controls preload = "auto" poster = "${url}/cover.webp" data-setup = "{}" class = "vjs-fluid">
+        <video-js controls preload = "auto" poster = "${url}/cover.webp" data-setup = "{}" class = "vjs">
             <source src = "${url}/video.mkv" type = "video/matroska">
         </video-js>
         <hr>
         <span>
-            <a href = "/channel/${channel.id}">${channel.name}</a> (${channel.subscribers.toLocaleString()} subscribers) <br>
+            <a href = "/channel/${channel.handle || channel.id}">${channel.name}</a> (${channel.subscribers.toLocaleString()} subscribers) <br>
             ${video.duration_string} • ${video.view_count.toLocaleString()} views • ${video.like_count.toLocaleString()} likes • ${humanizeTime(video.timestamp)}
         </span>
         <hr>

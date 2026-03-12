@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS channels (
     id          TEXT PRIMARY KEY,
+    handle      TEXT UNIQUE,
     name        TEXT,
     subscribers INTEGER
 );
@@ -20,6 +21,7 @@ CREATE TABLE IF NOT EXISTS videos (
 CREATE VIEW IF NOT EXISTS videos_w_channel AS
 SELECT
     v.*,
-    c.name AS channel_name
+    c.name AS channel_name,
+    c.handle as channel_handle
 FROM videos v
 JOIN channels c ON v.channel_id = c.id;

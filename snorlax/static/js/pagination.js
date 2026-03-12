@@ -29,14 +29,14 @@ import { humanizeTime } from "./humanize.js";
                                 <span>${item.title}</span>
                             </a>
                             <div>
-                                <a href = "/channel/${item.channel_id}" class = "silent">${item.channel_name}</a> <br>
+                                <a href = "/channel/${item.channel_handle || item.channel_id}" class = "silent">${item.channel_name}</a> <br>
                                 <span>${item.view_count.toLocaleString()} views • ${humanizeTime(item.timestamp)}</span>
                             </div>
                         `;
                         break;
     
                     case "channel":
-                        element.innerHTML = `<a href = "/channel/${item.id}">${item.name}</a>`;
+                        element.innerHTML = `<a href = "/channel/${item.handle || item.id}">${item.name}</a>`;
                         break;
                 }
     

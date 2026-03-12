@@ -45,7 +45,8 @@ class Job:
             "status": data["status"],
             "title": data["info_dict"]["title"],
             "channel": data["info_dict"]["uploader"],
-            "channel_id": data["info_dict"]["uploader_id"],
+            "channel_handle": data["info_dict"].get("uploader_id"),
+            "channel_id": data["info_dict"]["channel_id"],
             "timestamp": data["info_dict"]["timestamp"],
             "speed": round((data["speed"] or 0) / (1024 ** 2), 2),
             "eta": round((data["total_bytes"] - data["downloaded_bytes"]) / (data["speed"] or 0.1))
@@ -87,14 +88,15 @@ class Job:
             return
 
         # Save everything to database
-        if await db.get_channel(info["uploader_id"]) is None:
-            await db.add_channel(info["uploader_id"], info["uploader"], info["channel_follower_count"])
+        channel = await db.get_channel(info["channel_id"])
+        if channel is None:
+            await db.add_channel(info["channel_id"], info.get("uploader_id"), info["uploader"], info["channel_follower_count"])
 
-        info |= {"caption_langs": ",".join((info["requested_subtitles"] or {}).keys()), "channel_id": info["uploader_id"]}
+        info |= {"caption_langs": ",".join((info["requested_subtitles"] or {}).keys()), "channel_id": info["channel_id"]}
         await db.add_video(**{k: v for k, v in info.items() if k in VIDEO_PARAMS})  # type: ignore
 
         # Reorganize everything
-        video_path = config.snorlax.video_path / info["uploader_id"] / self.video_id
+        video_path = config.snorlax.video_path / info["channel_id"] / self.video_id
         if not video_path.is_dir():
             video_path.mkdir(parents = True)
 

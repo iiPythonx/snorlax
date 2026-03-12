@@ -23,7 +23,7 @@ ws.addEventListener("message", (e) => {
             </div>
             <div class = "flex">
                 ${data.status === "failed" ? "failed, check server console for details" : `
-                    <a href = "/channel/${data.channel_id}">${data.channel}</a> •
+                    <a href = "/channel/${data.channel_handle || data.channel_id}">${data.channel}</a> •
                     ${humanizeTime(data.timestamp)} • ${data.status} ${data.status === 'downloading' ? `• ${data.speed} MiB/s • ETA ${data.eta}s` : ''}
                 `}
                 <pre class = "pad-left">[${'='.repeat(completed_amount)}${' '.repeat(progress_spacing)}] ${data.progress}%</pre>

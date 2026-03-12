@@ -5,8 +5,8 @@ import aiosqlite
 from snorlax.config import ROOT, config
 
 VIDEO_PARAMS           = ("id", "title", "description", "view_count", "like_count", "duration_string", "timestamp", "channel_id", "caption_langs")
-VIDEO_W_CHANNEL_PARAMS = VIDEO_PARAMS + ("channel_name",)
-CHANNEL_PARAMS         = ("id", "name", "subscribers")
+VIDEO_W_CHANNEL_PARAMS = VIDEO_PARAMS + ("channel_name", "channel_handle")
+CHANNEL_PARAMS         = ("id", "handle", "name", "subscribers")
 
 class Database:
     def __init__(self) -> None:
@@ -64,12 +64,12 @@ class Database:
             return [dict(zip(columns, row)) for row in rows], count_result[0]
 
     # Channels
-    async def add_channel(self, id: str, name: str, subscribers: int) -> None:
-        await self.db.execute("INSERT OR IGNORE INTO channels VALUES (?, ?, ?)", (id, name, subscribers))
+    async def add_channel(self, id: str, handle: str | None, name: str, subscribers: int) -> None:
+        await self.db.execute("INSERT OR IGNORE INTO channels VALUES (?, ?, ?, ?)", (id, handle, name, subscribers))
         await self.db.commit()
 
     async def get_channel(self, channel_id: str) -> dict[str, typing.Any] | None:
-        async with self.db.execute("SELECT * FROM channels WHERE id = ?", (channel_id,)) as result:
+        async with self.db.execute("SELECT * FROM channels WHERE id = ? OR handle = ?", (channel_id, channel_id)) as result:
             channel = await result.fetchone()
             return dict(zip(CHANNEL_PARAMS, channel)) if channel else None
 
