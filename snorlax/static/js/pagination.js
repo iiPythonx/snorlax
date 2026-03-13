@@ -16,7 +16,7 @@ import { humanizeTime } from "./lib/humanize.js";
         // Make request
         const container = list.querySelector("div");
         async function load() {
-            if (!settings.params) {
+            if (settings.endpoint === "search" && !settings.params) {
                 container.innerHTML = `<span>Nothing to show.</span>`;
                 return;
             }
@@ -26,7 +26,7 @@ import { humanizeTime } from "./lib/humanize.js";
                 return `${encodeURIComponent(k)}=${encodeURIComponent(v ?? "")}`;
             }).join("&");
 
-            const response = await (await fetch(`${settings.endpoint}?page=${page}&limit=${settings.limit}${query && '&'}${query}`)).json();
+            const response = await (await fetch(`/v1/${settings.endpoint}?page=${page}&limit=${settings.limit}${query && '&'}${query}`)).json();
             total = Math.ceil(response.data.total / settings.limit);
     
             // Build page

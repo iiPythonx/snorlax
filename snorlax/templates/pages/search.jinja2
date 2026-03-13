@@ -15,7 +15,7 @@
         <input type = "text" placeholder = "Search for anything" autocomplete = "off" autofocus>
         <hr>
         <h2>Results</h2>
-        {{ paginate("/v1/search", type = "video", params = (("query=" ~ query) if query else None)) }}
+        {{ paginate("search", type = "video", params = (("query=" ~ query) if query else None)) }}
     </section>
     <script>
         const paginator = document.querySelector("div[data-api-type]");

@@ -5,10 +5,10 @@
     {% include "macros/header.jinja2" %}
     <section class = "flex column">
         <h2>Channels</h2>
-        {{ paginate("/v1/channels", type = "channel", limit = 16) }}
+        {{ paginate("channels", type = "channel", limit = 16) }}
     </section>
     <section class = "flex column">
         <h2>Videos</h2>
-        {{ paginate("/v1/videos", type = "video") }}
+        {{ paginate("videos", type = "video") }}
     </section>
 {% endblock %}

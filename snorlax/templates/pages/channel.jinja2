@@ -8,5 +8,5 @@
         <span style = "line-height: 2;">{{ "{:,}".format(channel["subscribers"]) }} subscribers</span>
     </section>
     <hr>
-    {{ paginate("/v1/videos", type = "video", params = "channel_id=" ~ channel["id"]) }}
+    {{ paginate("videos", type = "video", params = "channel_id=" ~ channel["id"]) }}
 {% endblock %}
