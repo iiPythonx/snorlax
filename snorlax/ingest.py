@@ -2,6 +2,7 @@
 
 import typing
 import asyncio
+import traceback
 
 from yt_dlp import YoutubeDL
 from yt_dlp.utils import DownloadError
@@ -37,7 +38,7 @@ class Job:
         if self._canceled:
             raise DownloadError("The requested download has been canceled")
 
-        if data["status"] not in {"finished", "downloading"}:
+        if (data["status"] not in {"finished", "downloading"}) or ("title" not in data["info_dict"]):
             return
 
         self._progress = {
@@ -66,12 +67,14 @@ class Job:
             info: dict[str, typing.Any] = await asyncio.to_thread(self.ytdl.extract_info, f"https://youtu.be/{self.video_id}", download)  # type: ignore
             return info
 
-        except Exception:
+        except Exception as e:
             if self._canceled:
                 for file in TEMP_PATH.glob(f"{self.video_id}*"):
                     file.unlink()
 
             self._progress = {"progress": 0, "status": "failed", "title": self.video_id}
+            if not isinstance(e, DownloadError):
+                traceback.print_exc()
 
     async def start(self) -> None:
         if not TEMP_PATH.is_dir():
