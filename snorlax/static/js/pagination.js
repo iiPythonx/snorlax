@@ -1,26 +1,39 @@
 // Copyright (c) 2026 iiPython
 
-import { humanizeTime } from "./humanize.js";
+import { humanizeTime } from "./lib/humanize.js";
 
 {
     for (const list of document.querySelectorAll("[data-api-type]")) {
-        const type = list.getAttribute("data-api-type");
-        const limit = +list.getAttribute("data-api-limit");
-        const filters = list.getAttribute("data-api-filter");
-        
-        let page = 1, total = 10e10;
+        const settings = {
+            type:     list.getAttribute("data-api-type"),      // 'video' or 'channel'
+            endpoint: list.getAttribute("data-api-endpoint"),  // ex. /v1/videos
+            limit:   +list.getAttribute("data-api-limit"),     // amount of items to return
+            params:   list.getAttribute("data-api-params")     // channel_id=420, query=resident%20evil, etc.
+        };
+
+        let page = 1, total = 1;
         
         // Make request
         const container = list.querySelector("div");
         async function load() {
-            const response = await (await fetch(`/v1/${type}s?page=${page}&limit=${limit}${filters && '&'}${filters}`)).json();
-            total = Math.ceil(response.data.total / limit);
+            if (!settings.params) {
+                container.innerHTML = `<span>Nothing to show.</span>`;
+                return;
+            }
+
+            const query = settings.params.split(",").map(p => {
+                const [k, v] = p.split("=");
+                return `${encodeURIComponent(k)}=${encodeURIComponent(v ?? "")}`;
+            }).join("&");
+
+            const response = await (await fetch(`${settings.endpoint}?page=${page}&limit=${settings.limit}${query && '&'}${query}`)).json();
+            total = Math.ceil(response.data.total / settings.limit);
     
             // Build page
-            container.innerHTML = "";
+            container.innerHTML = !response.data.items.length ? "<span>No results returned from API.</span>" : "";
             for (const item of response.data.items) {
                 const element = document.createElement("article");
-                switch (type) {
+                switch (settings.type) {
                     case "video":
                         element.innerHTML = `
                             <a href = "/watch/${item.id}" class = "video-poster flex column">
@@ -36,7 +49,7 @@ import { humanizeTime } from "./humanize.js";
                         break;
     
                     case "channel":
-                        element.innerHTML = `<a href = "/channel/${item.handle || item.id}">${item.name}</a>`;
+                        element.innerHTML = `<a href = "/channel/${item.preferred_id}">${item.name}</a>`;
                         break;
                 }
     
@@ -66,6 +79,12 @@ import { humanizeTime } from "./humanize.js";
         btn_next.addEventListener("click", () => {
             if (page + 1 <= total) { page++; update(); }
         });
+
+        // Allow settings updates
+        list.snorlaxUpdateParams = (params) => {
+            settings.params = params, page = 1;
+            update();
+        };
     }
 }
 

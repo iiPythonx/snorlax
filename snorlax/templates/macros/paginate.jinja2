@@ -1,8 +1,9 @@
-{% macro paginate(type, filter, limit) %}
+{% macro paginate(endpoint, type, params, limit) %}
     <div
         class = "flex column"
         data-api-type = "{{ type }}"
-        data-api-filter = "{{ filter or '' }}"
+        data-api-endpoint = "{{ endpoint }}"
+        data-api-params = "{{ params or '' }}"
         data-api-limit = "{{ limit or 8 }}"
     >
         <div class = "flex item-list"></div>

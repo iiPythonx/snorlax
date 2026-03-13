@@ -22,7 +22,49 @@ CREATE TABLE IF NOT EXISTS videos (
 CREATE VIEW IF NOT EXISTS videos_w_channel AS
 SELECT
     v.*,
+    v.rowid AS rowid,
     c.name AS channel_name,
     c.preferred_id AS channel_preferred_id
 FROM videos v
 JOIN channels c ON v.channel_id = c.id;
+
+-- Full text search
+CREATE VIRTUAL TABLE IF NOT EXISTS videos_fts USING fts5(
+    title,
+    description,
+    channel_name
+);
+
+CREATE TRIGGER IF NOT EXISTS video_after_insert AFTER INSERT ON videos BEGIN
+    INSERT INTO videos_fts(rowid, title, description, channel_name)
+    SELECT
+        new.rowid,
+        new.title,
+        new.description,
+        c.name
+    FROM channels c
+    WHERE c.id = new.channel_id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS video_after_delete AFTER DELETE ON videos BEGIN
+    DELETE FROM videos_fts WHERE rowid = old.rowid;
+END;
+
+CREATE TRIGGER IF NOT EXISTS video_after_update AFTER UPDATE ON videos BEGIN
+    UPDATE videos_fts
+    SET
+        title = new.title,
+        description = new.description,
+        channel_name = (
+            SELECT name FROM channels WHERE id = new.channel_id
+        )
+    WHERE rowid = new.rowid;
+END;
+
+CREATE TRIGGER IF NOT EXISTS channel_after_name_update AFTER UPDATE OF name ON channels BEGIN
+    UPDATE videos_fts
+    SET channel_name = new.name
+    WHERE rowid IN (
+        SELECT rowid FROM videos WHERE channel_id = new.id
+    );
+END;

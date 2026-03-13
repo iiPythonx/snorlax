@@ -1,5 +1,6 @@
 # Copyright (c) 2025-2026 iiPython
 
+import string
 import typing
 import aiosqlite
 from snorlax.config import ROOT, config
@@ -7,6 +8,8 @@ from snorlax.config import ROOT, config
 VIDEO_PARAMS           = ("id", "title", "description", "view_count", "like_count", "duration_string", "timestamp", "channel_id", "caption_langs")
 VIDEO_W_CHANNEL_PARAMS = VIDEO_PARAMS + ("channel_name", "channel_preferred_id")
 CHANNEL_PARAMS         = ("id", "handle", "name", "subscribers", "preferred_id")
+
+SEARCH_VALID_TOKENS = string.ascii_letters + string.digits + " "
 
 class Database:
     def __init__(self) -> None:
@@ -17,6 +20,17 @@ class Database:
 
         # Initialize tables
         await self.db.executescript((ROOT / "database/tables.sql").read_text())
+
+        # Handle FTS
+        async with self.db.execute_fetchall("SELECT 1 FROM videos_fts LIMIT 1") as response:
+            if not response:
+                await self.db.execute("""
+                    INSERT INTO videos_fts(rowid, title, description, channel_name)
+                    SELECT v.rowid, v.title, v.description, c.name
+                    FROM videos v
+                    JOIN channels c ON c.id = v.channel_id;
+                """)
+
         await self.db.commit()
 
     async def close(self) -> None:
@@ -24,26 +38,44 @@ class Database:
         await self.db.close()
 
     # Querying
+    @staticmethod
+    def _build_column_string(columns: tuple[str, ...], alias: str | None = None) -> str:
+        return ", ".join(
+            f"{alias}.{column} as {column}" if alias else column
+            for column in columns
+        )
+
     async def _fetch(
         self,
         table: str,
         columns: tuple[str, ...],
-        filters: dict[str, typing.Any] = {},
+        filters: list[tuple[str, str, typing.Any]] | None = None,
+        joins: list[str] | None = None,
         order_by: str | None = None,
         limit: int | None = None,
         page: int | None = 1
     ) -> tuple[list[dict], int]:
-        query, params = f"SELECT {', '.join(columns)} FROM {table}", []
+        select_columns = self._build_column_string(columns, alias = "v" if joins else None)
+        query, params = f"SELECT {select_columns} FROM {table}", []
+
+        # Handle joining
+        if joins:
+            query += f" {' '.join(joins)}"
+
+        # Handle filtering
         if filters:
-            query += " WHERE " + " AND ".join(f"{k} = ?" for k in filters)
-            params.extend(filters.values())
+            query += " WHERE " + " AND ".join(f"{column} {operator} ?" for column, operator, _ in filters)
+            params.extend(value for _, _, value in filters)
 
         # Handle counting
         count_query = f"SELECT COUNT(*) FROM {table}"
-        if filters:
-            count_query += " WHERE " + " AND ".join(f"{k} = ?" for k in filters)
+        if joins:
+            count_query += f" {' '.join(joins)}"
 
-        count_result = await (await self.db.execute(count_query, list(filters.values()))).fetchone()
+        if filters:
+            count_query += " WHERE " + " AND ".join(f"{column} {operator} ?" for column, operator, _ in filters)
+
+        count_result = await (await self.db.execute(count_query, params)).fetchone()
         if count_result is None:
             raise RuntimeError("SQL returned no count data!")
 
@@ -91,7 +123,7 @@ class Database:
         await self.db.commit()
 
     async def get_video(self, video_id: str) -> dict[str, typing.Any] | None:
-        async with self.db.execute("SELECT * FROM videos_w_channel WHERE id = ?", (video_id,)) as result:
+        async with self.db.execute(f"SELECT {', '.join(VIDEO_W_CHANNEL_PARAMS)} FROM videos_w_channel WHERE id = ?", (video_id,)) as result:
             result = await result.fetchone()
             return dict(zip(VIDEO_W_CHANNEL_PARAMS, result)) if result else None
 
@@ -99,10 +131,25 @@ class Database:
         return await self._fetch(
             table = "videos_w_channel",
             columns = VIDEO_W_CHANNEL_PARAMS,
-            filters = {"channel_id": channel_id} if channel_id is not None else {},
+            filters = [("channel_id", "=", channel_id)] if channel_id is not None else [],
             order_by = "timestamp DESC",
             limit = limit,
             page = page
-    )
+        )
+
+    async def search_videos(self, query: str, limit: int | None = None, page: int | None = 1) -> tuple[list[dict[str, typing.Any]], int]:
+        query = "".join(c for c in query if c in SEARCH_VALID_TOKENS)
+        if not query.strip():
+            return [], 0
+
+        return await self._fetch(
+            table = "videos_fts f",
+            columns = VIDEO_W_CHANNEL_PARAMS,
+            filters = [("videos_fts", "MATCH", " ".join(f"{word}*" for word in query.split()))],
+            joins = ["JOIN videos_w_channel v ON v.rowid = f.rowid"],
+            order_by = "bm25(videos_fts)",
+            limit = limit,
+            page = page
+        )
 
 db = Database()

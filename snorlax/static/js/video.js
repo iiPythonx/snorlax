@@ -1,4 +1,4 @@
-import { humanizeTime } from "./humanize.js";
+import { humanizeTime } from "./lib/humanize.js";
 
 const VIDEO_ID = window.location.pathname.split("/")[2];
 const MAIN_ELEMENT = document.getElementById("video-page");

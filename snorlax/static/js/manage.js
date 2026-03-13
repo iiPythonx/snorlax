@@ -1,4 +1,4 @@
-import { humanizeTime } from "./humanize.js";
+import { humanizeTime } from "./lib/humanize.js";
 
 // Handle job listing
 const ws = new WebSocket("/v1/jobs");

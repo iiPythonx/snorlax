@@ -74,6 +74,11 @@ async def route_v1_video(video_id: str) -> JSONResponse:
 
     return JSONResponse({"code": 200, "data": video_data})
 
+@app.get("/v1/search")
+async def route_v1_search(pagination: typing.Annotated[dict, Depends(pagination_parameters)], query: str) -> JSONResponse:
+    videos, total = await db.search_videos(query, **pagination)
+    return JSONResponse({"code": 200, "data": {"items": videos, "total": total}})
+
 async def print_job_updates(websocket: WebSocket) -> None:
     while True:
         try:
@@ -127,6 +132,10 @@ async def route_watch(request: Request, video_id: str):
 @app.get("/manage", response_class = HTMLResponse)
 async def route_manage(request: Request):
     return templates.TemplateResponse(request, "pages/manage.jinja2")
+
+@app.get("/search", response_class = HTMLResponse)
+async def route_search(request: Request, query: typing.Optional[str] = None):
+    return templates.TemplateResponse(request, "pages/search.jinja2", {"query": query})
 
 # Mount /videos
 app.mount("/videos", StaticFiles(directory = config.snorlax.video_path))
