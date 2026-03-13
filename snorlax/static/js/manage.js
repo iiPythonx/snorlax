@@ -26,7 +26,7 @@ ws.addEventListener("message", (e) => {
                     <a href = "/channel/${data.channel_preferred_id}">${data.channel}</a> •
                     ${humanizeTime(data.timestamp)} • ${data.status} ${data.status === 'downloading' ? `• ${data.speed} MiB/s • ETA ${data.eta}s` : ''}
                 `}
-                <pre class = "pad-left">[${'='.repeat(completed_amount)}${' '.repeat(progress_spacing)}] ${data.progress}%</pre>
+                <pre class = "pad-left">[${'='.repeat(completed_amount)}${' '.repeat(progress_spacing)}] <span style = "width: 30px; display: inline-block; text-align: right;">${data.progress}%</span></pre>
             </div>
             <br> <hr>
         `;
