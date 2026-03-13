@@ -19,11 +19,36 @@ main {
     display: flex;
     flex-direction: column;
 }
-hr {
-    border-color: #535353;
-}
 pre {
     text-wrap: wrap;
+}
+
+/* Pagination */
+.paginator {
+    width: 100%;
+    justify-content: center;
+    margin-top: 10px;
+    position: relative;
+
+    .api-time {
+        position: absolute;
+        left: 0px;
+        height: 100%;
+        opacity: .5;
+    }
+}
+
+/* Input styling (Search) */
+hr {
+    border: none;
+    border-bottom: 1px solid #535353;
+}
+
+input {
+    background: none;
+    outline: none;
+    padding: 5px;
+    border: 1px solid #535353;
 }
 
 /* Link styling */

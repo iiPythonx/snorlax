@@ -3,12 +3,10 @@
 
 {% block content %}
     {% include "macros/header.jinja2" %}
-    <section class = "flex column">
-        <h2>Channels</h2>
-        {{ paginate("channels", type = "channel", limit = 16) }}
-    </section>
-    <section class = "flex column">
-        <h2>Videos</h2>
-        {{ paginate("videos", type = "video") }}
-    </section>
+
+    <h2>Channels</h2>
+    {{ paginate("channels", type = "channel", limit = 16) }}
+
+    <h2>Videos</h2>
+    {{ paginate("videos", type = "video") }}
 {% endblock %}

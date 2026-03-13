@@ -59,11 +59,15 @@ import { humanizeTime } from "./lib/humanize.js";
         }
     
         // Handle interface
-        const indicator = list.querySelector("& > article span");
+        const load_time = list.querySelector(".api-time")
+        const indicator = list.querySelector(".current-page");
         const btn_back = list.querySelector(".btn-back"), btn_next = list.querySelector(".btn-next");
 
         async function update() {
+            const start = Date.now();
             await load();
+
+            load_time.innerText = `[ ${(Date.now() - start)}ms ]`;
             indicator.innerText = `| Page ${page} / ${total} |`;
 
             btn_back.disabled = page === 1;

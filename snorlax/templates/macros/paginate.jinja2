@@ -7,10 +7,11 @@
         data-api-limit = "{{ limit or 8 }}"
     >
         <div class = "flex item-list"></div>
-        <article class = "flex" style = "width: 100%; justify-content: center;">
+        <article class = "flex paginator">
+            <span class = "api-time"></span>
             <div>
                 <button class = "btn-back">&lt; Back</button>
-                <span>Page 1 / 1</span>
+                <span class = "current-page">Page 1 / 1</span>
                 <button class = "btn-next">Next &gt;</button>
             </div>
         </article>

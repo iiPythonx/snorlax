@@ -3,29 +3,11 @@
 
 {% block content %}
     {% include "macros/header.jinja2" %}
-    <style>
-        input {
-            background: none;
-            outline: none;
-            padding: 5px;
-            border: 1px solid #535353;
-        }
-    </style>
-    <section class = "flex column">
+    <main>
         <input type = "text" placeholder = "Search for anything" autocomplete = "off" autofocus>
         <hr>
         <h2>Results</h2>
         {{ paginate("search", type = "video", params = (("query=" ~ query) if query else None)) }}
-    </section>
-    <script>
-        const paginator = document.querySelector("div[data-api-type]");
-
-        let timeout;
-        document.querySelector("input").addEventListener("keydown", (e) => {
-            if (timeout) clearTimeout(timeout);
-            timeout = setTimeout(() => {
-                paginator.snorlaxUpdateParams(`query=${e.target.value}`);
-            }, 500);
-        });
-    </script>
+    </main>
+    <script src = "/js/search.js" async defer></script>
 {% endblock %}
