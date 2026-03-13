@@ -36,6 +36,7 @@ This name duplication shouldn't be a problem though, other then making the chann
 /v1/video/VIDEO_ID
 /v1/channel/CHANNEL_ID
 /v1/jobs
+/v1/search
 ```
 
 ### Screenshot
@@ -47,4 +48,4 @@ This name duplication shouldn't be a problem though, other then making the chann
 - [x] Migrate /watch to an API endpoint, with JS-based humanize
 - [x] Migrate the ingest methods to custom API endpoints
 - [ ] Ability to set video expiration time, turning Snorlax into something like [cobalt](https://cobalt.tools/)
-- [ ] Search mechanism for channels and videos
+- [x] Search mechanism for ~~channels and~~ videos
