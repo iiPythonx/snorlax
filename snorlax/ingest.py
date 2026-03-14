@@ -43,7 +43,7 @@ class Job:
 
         self._progress = {
             "progress": round((data["downloaded_bytes"] / (data["total_bytes"] or 0.1)) * 100),
-            "status": data["status"],
+            "status": data["status"] if data["status"] != "finished" else "remuxing",
             "title": data["info_dict"]["title"],
             "channel": data["info_dict"]["uploader"],
             "channel_preferred_id": data["info_dict"].get("uploader_id") or data["info_dict"]["channel_id"],
@@ -88,6 +88,8 @@ class Job:
         info = await self._extract_info()
         if info is None:
             return
+
+        self._progress["status"] = "finished"
 
         # Save everything to database
         channel = await db.get_channel(info["channel_id"])

@@ -21,7 +21,7 @@ import { humanizeTime } from "./lib/humanize.js";
                 return;
             }
 
-            const query = settings.params.split(",").map(p => {
+            const query = settings.params ?? settings.params.split(",").map(p => {
                 const [k, v] = p.split("=");
                 return `${encodeURIComponent(k)}=${encodeURIComponent(v ?? "")}`;
             }).join("&");
