@@ -72,7 +72,7 @@ class Job:
                 for file in TEMP_PATH.glob(f"{self.video_id}*"):
                     file.unlink()
 
-            self._progress = {"progress": 0, "status": "failed", "title": self.video_id}
+            self._progress |= {"progress": 0, "status": "failed"}
             if not isinstance(e, DownloadError):
                 traceback.print_exc()
 

@@ -51,5 +51,18 @@ if (response.code !== 200) {
     }
 
     // Initialize playback
-    videojs(video_element);
+    const player = videojs(video_element);
+
+    // Handle sponsorblock
+    const sponsor_segments = await (await fetch(`https://sponsor.ajay.app/api/skipSegments?videoID=${VIDEO_ID}`)).json().catch(() => []);
+    player.on("timeupdate", () => {
+        const time = player.currentTime();
+        for (const seg of sponsor_segments) {
+            const [start, end] = seg.segment;
+            if (time >= start && time < end) {
+                player.currentTime(end);
+                break;
+            }
+        }
+    });
 }

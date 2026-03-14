@@ -22,10 +22,8 @@ ws.addEventListener("message", (e) => {
                 <button class = "pad-left">${finished ? 'Remove' : 'Cancel'} Job</button>
             </div>
             <div class = "flex">
-                ${data.status === "failed" ? "failed, check server console for details" : `
-                    <a href = "/channel/${data.channel_preferred_id}">${data.channel}</a> •
-                    ${humanizeTime(data.timestamp)} • ${data.status} ${data.status === 'downloading' ? `• ${data.speed} MiB/s • ETA ${data.eta}s` : ''}
-                `}
+                <a href = "/channel/${data.channel_preferred_id}">${data.channel}</a> •
+                ${humanizeTime(data.timestamp)} • ${data.status} ${data.status === 'downloading' ? `• ${data.speed} MiB/s • ETA ${data.eta}s` : ''}
                 <pre class = "pad-left">[${'='.repeat(completed_amount)}${' '.repeat(progress_spacing)}] <span style = "width: 30px; display: inline-block; text-align: right;">${data.progress}%</span></pre>
             </div>
             <br> <hr>
