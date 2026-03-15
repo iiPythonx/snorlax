@@ -6,7 +6,7 @@ import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from fastapi.websockets import WebSocketState
@@ -100,6 +100,16 @@ async def route_v1_jobs(websocket: WebSocket) -> None:
     except WebSocketDisconnect:
         task.cancel()
 
-# Mount /videos
+# Mount assets
 app.mount("/v1/assets", StaticFiles(directory = config.snorlax.video_path))
-app.mount("/", StaticFiles(directory = ROOT / "frontend/dist", html = True))
+
+# Mount frontend
+FRONTEND = ROOT / "frontend/dist"
+
+@app.get("/{path:path}")
+async def route_index(path: str) -> FileResponse:
+    target = FRONTEND / path
+    if not (target.is_relative_to(FRONTEND) and target.is_file()):
+        return FileResponse(FRONTEND / "index.html")
+
+    return FileResponse(target)

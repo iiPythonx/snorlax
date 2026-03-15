@@ -22,7 +22,7 @@ export default function Manage() {
 
     // Connect to websocket
     useEffect(() => {
-        const ws = new WebSocket("/v1/jobs");
+        const ws = new WebSocket(`${window.location.port === '5173' ? 'http://localhost:8000' : ''}/v1/jobs`);
         ws.addEventListener("message", (e) => setJobs(JSON.parse(e.data) as JobMap));
         
         socketReference.current = ws;
