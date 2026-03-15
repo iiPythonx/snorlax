@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "preact/hooks";
 
-import videojs from "video.js";
 import type Player from "video.js/dist/types/player";
 import { Link } from "wouter";
 
@@ -12,21 +11,53 @@ import Header from "../components/header";
 import { useVideo } from "../hooks/useVideo";
 import { useChannel } from "../hooks/useChannel";
 
-function VideoPlayer({ src, poster }: { src: string, poster: string }) {
+type Caption = {
+    src:     string;
+    kind:    string;
+    srclang: string;
+    label:   string;
+    default: boolean;
+}
+
+function VideoPlayer({ src, poster, id, captions = [] }: { src: string, poster: string, id: string, captions: Caption[] }) {
     const videoReference = useRef<HTMLVideoElement>(null);
     const playerReference = useRef<Player>(null);
     
     useEffect(() => {
         if (!videoReference.current) return;
 
-        playerReference.current = videojs(videoReference.current, {
-            controls: true,
-            preload: "auto",
-            poster,
-            sources: [{ src, type: "video/matroska" }]
+        let cancelled = false;
+        import("video.js").then(async (module) => {
+            if (cancelled) return;
+            playerReference.current = module.default(videoReference.current as HTMLVideoElement, {
+                controls: true,
+                preload: "auto",
+                poster,
+                sources: [{ src, type: "video/matroska" }],
+                tracks: captions
+            })
+
+            // Sponsorblock
+            if (id) {
+                const segments: { segment: [number, number] }[] = await (await fetch(`https://sponsor.ajay.app/api/skipSegments?videoID=${id}`)).json();
+                playerReference.current.on("timeupdate", () => {
+                    if (!playerReference.current) return;
+
+                    const time = playerReference.current.currentTime() || 0;
+                    for (const seg of segments) {
+                        const [start, end] = seg.segment;
+                        if (time >= start && time < end) {
+                            playerReference.current.currentTime(end);
+                            break;
+                        }
+                    }
+                });
+            }
         })
 
+
         return () => {
+            cancelled = true;
             if (playerReference.current) playerReference.current.dispose();
         };
     }, [src, poster]);
@@ -60,9 +91,18 @@ export default function Watch({ id }: { id: string }) {
 
                 const videoBaseUrl = `/v1/assets/${video.channel_id}/${video.id}`;
 
+                const languages = new Intl.DisplayNames(["en"], { type: "language" });
+                const captions = video?.caption_langs ? video?.caption_langs.split(",").map((code) => ({
+                    kind: "captions",
+                    src: `${videoBaseUrl}/sub.${code}.vtt`,
+                    srclang: code,
+                    label: languages.of(code) || code,
+                    default: ["en", "en-GB"].includes(code),
+                })) : [];
+
                 return <>
                     <h2>{video.title}</h2>
-                    <VideoPlayer src = {`${videoBaseUrl}/video.mkv`} poster = {`${videoBaseUrl}/cover.webp`} />
+                    <VideoPlayer src = {`${videoBaseUrl}/video.mkv`} poster = {`${videoBaseUrl}/cover.webp`} id = {id} captions = {captions} />
                     <hr />
                     <span>
                         <Link href = {`/channel/${channel.preferred_id}`}>{channel.name}</Link> ({channel.subscribers.toLocaleString()} subscribers) <br />

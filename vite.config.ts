@@ -1,7 +1,9 @@
 import { defineConfig } from "vite";
 import preact from "@preact/preset-vite";
+import path from "path";
 
 export default defineConfig({
+    root: path.resolve(__dirname, "snorlax", "frontend"),
     plugins: [preact()],
     server: {
         proxy: {

@@ -4,14 +4,14 @@ import { Link } from "wouter";
 import { humanizeTime } from "../lib/time";
 
 type Job = {
-    title: string;
-    channel: string;
+    title:                string;
+    channel:              string;
     channel_preferred_id: string;
-    timestamp: number;
-    status: string;
-    progress: number;
-    speed?: number;
-    eta?: number;
+    timestamp:            number;
+    status:               string;
+    progress:             number;
+    speed?:               number;
+    eta?:                 number;
 };
 
 type JobMap = Record<string, Job>
