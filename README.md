@@ -2,6 +2,13 @@
 
 ### Running
 
+Build the frontend (`snorlax/frontend`):
+```sh
+bun i
+bun run build
+```
+
+Launch the backend:
 ```sh
 uv pip install .
 uv run uvicorn snorlax:app

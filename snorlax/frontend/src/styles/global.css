@@ -137,7 +137,7 @@ button {
 }
 
 /* Video.js Sizing */
-video-js.vjs {
+.video-js {
     aspect-ratio: 16 / 9;
     height: auto;
     width: 100%;

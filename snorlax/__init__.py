@@ -5,14 +5,12 @@ import typing
 import asyncio
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, Request, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import Depends, FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 
 from fastapi.websockets import WebSocketState
 from pydantic import Field
-from starlette.exceptions import HTTPException
 
 from snorlax.config import ROOT, config
 from snorlax.ingest import Snorlax
@@ -30,16 +28,6 @@ async def lifespan(app: FastAPI) -> typing.AsyncGenerator:
     await db.close()
 
 app = FastAPI(openapi_url = None, lifespan = lifespan)
-templates = Jinja2Templates(directory = ROOT / "templates")
-
-# Exception processing
-@app.exception_handler(HTTPException)
-async def handle_exception(request: Request, exception: HTTPException):
-    return templates.TemplateResponse(
-        request,
-        f"errors/{exception.status_code}.jinja2",
-        status_code = exception.status_code
-    )
 
 # API
 async def pagination_parameters(
@@ -112,31 +100,6 @@ async def route_v1_jobs(websocket: WebSocket) -> None:
     except WebSocketDisconnect:
         task.cancel()
 
-# Routing
-@app.get("/", response_class = HTMLResponse)
-async def route_home(request: Request):
-    return templates.TemplateResponse(request, "pages/home.jinja2")
-
-@app.get("/channel/{channel_id:str}", response_class = HTMLResponse)
-async def route_channel(request: Request, channel_id: str):
-    channel = await db.get_channel(channel_id)
-    if channel is None:
-        raise HTTPException(status_code = 404)
-
-    return templates.TemplateResponse(request, "pages/channel.jinja2", {"channel": channel})
-
-@app.get("/watch/{video_id}", response_class = HTMLResponse)
-async def route_watch(request: Request, video_id: str):
-    return templates.TemplateResponse(request, "pages/video.jinja2")
-
-@app.get("/manage", response_class = HTMLResponse)
-async def route_manage(request: Request):
-    return templates.TemplateResponse(request, "pages/manage.jinja2")
-
-@app.get("/search", response_class = HTMLResponse)
-async def route_search(request: Request, query: typing.Optional[str] = None):
-    return templates.TemplateResponse(request, "pages/search.jinja2", {"query": query})
-
 # Mount /videos
-app.mount("/videos", StaticFiles(directory = config.snorlax.video_path))
-app.mount("/", StaticFiles(directory = ROOT / "static"))
+app.mount("/v1/assets", StaticFiles(directory = config.snorlax.video_path))
+app.mount("/", StaticFiles(directory = ROOT / "frontend/dist", html = True))
