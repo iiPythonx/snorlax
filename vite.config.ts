@@ -11,6 +11,6 @@ export default defineConfig({
         }
     },
     build: {
-        chunkSizeWarningLimit: 700,  // To silence the Video.js chunk warning
+        chunkSizeWarningLimit: 750,  // To silence the Video.js chunk warning
     }
 });

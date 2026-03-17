@@ -31,14 +31,25 @@ function VideoPlayer({ src, poster, id, chapters, captions }: { src: string, pos
         let cancelled = false;
         import("video.js").then(async (module) => {
             if (cancelled) return;
+            
+            await import("videojs-hotkeys");
+            
             const videojs = module.default;
-
             const player = playerReference.current = videojs(videoReference.current as HTMLVideoElement, {
                 controls: true,
                 preload: "auto",
                 poster,
                 sources: [{ src, type: "video/matroska" }],
-                tracks: captions
+                tracks: captions,
+                plugins: {
+                    hotkeys: {
+                        enableModifiersForNumbers: false,
+                        alwaysCaptureHotkeys: true,
+                        captureDocumentHotkeys: true,
+                        documentHotkeysFocusElementFilter: (e: HTMLElement) => e.tagName.toLowerCase() === "body",
+                        enableVolumeScroll: false
+                    }
+                }
             });
 
             // Handle chapters

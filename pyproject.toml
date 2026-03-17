@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "snorlax"
-version = "0.22.0"
+version = "0.23.0"
 description = "Local-first video downloading and hosting"
 readme = "README.md"
 license = "GPL-3.0-or-later"
