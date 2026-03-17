@@ -28,7 +28,8 @@ class Job:
             "merge_output_format": "mkv",
             "remux_video": "mkv",
             "quiet": True,
-            "noprogress": True
+            "noprogress": True,
+            "js_runtimes": {"bun": {}}
         })  # type: ignore
 
         self._progress: dict[str, typing.Any] = {}
@@ -96,7 +97,7 @@ class Job:
         if channel is None:
             await db.add_channel(info["channel_id"], info.get("uploader_id"), info["uploader"], info["channel_follower_count"])
 
-        info |= {"caption_langs": ",".join((info["requested_subtitles"] or {}).keys())}
+        info |= {"caption_langs": list((info["requested_subtitles"] or {}).keys())}
         await db.add_video(**{k: v for k, v in info.items() if k in VIDEO_PARAMS})  # type: ignore
 
         # Reorganize everything

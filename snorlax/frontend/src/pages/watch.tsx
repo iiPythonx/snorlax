@@ -1,7 +1,8 @@
 import { useEffect, useRef } from "preact/hooks";
+import { Link } from "wouter";
 
 import type Player from "video.js/dist/types/player";
-import { Link } from "wouter";
+import type Component from "video.js/dist/types/component";
 
 import "video.js/dist/video-js.css";
 
@@ -10,6 +11,7 @@ import Header from "../components/header";
 
 import { useVideo } from "../hooks/useVideo";
 import { useChannel } from "../hooks/useChannel";
+import type { Chapter } from "../types/api";
 
 type Caption = {
     src:     string;
@@ -19,40 +21,79 @@ type Caption = {
     default: boolean;
 }
 
-function VideoPlayer({ src, poster, id, captions = [] }: { src: string, poster: string, id: string, captions: Caption[] }) {
+function VideoPlayer({ src, poster, id, chapters, captions }: { src: string, poster: string, id: string, chapters: Chapter[], captions: Caption[] }) {
     const videoReference = useRef<HTMLVideoElement>(null);
     const playerReference = useRef<Player>(null);
-    
+
     useEffect(() => {
         if (!videoReference.current) return;
 
         let cancelled = false;
         import("video.js").then(async (module) => {
             if (cancelled) return;
-            playerReference.current = module.default(videoReference.current as HTMLVideoElement, {
+            const videojs = module.default;
+
+            const player = playerReference.current = videojs(videoReference.current as HTMLVideoElement, {
                 controls: true,
                 preload: "auto",
                 poster,
                 sources: [{ src, type: "video/matroska" }],
                 tracks: captions
-            })
+            });
 
-            // Sponsorblock
-            if (id) {
-                const segments: { segment: [number, number] }[] = await (await fetch(`https://sponsor.ajay.app/api/skipSegments?videoID=${id}`)).json();
-                playerReference.current.on("timeupdate", () => {
-                    if (!playerReference.current) return;
+            // Handle chapters
+            if (chapters.length) {
+                player.on("loadedmetadata", () => {
+                    const total = player.duration();
+                    const seekBar = player.getDescendant("controlBar", "progressControl", "seekBar");
+                    if (!total || !seekBar) return;
 
-                    const time = playerReference.current.currentTime() || 0;
-                    for (const seg of segments) {
-                        const [start, end] = seg.segment;
-                        if (time >= start && time < end) {
-                            playerReference.current.currentTime(end);
-                            break;
-                        }
+                    for (const chapter of chapters) {
+                        const left = (chapter.start_time / total) * 100 + "%";
+                        seekBar.el().append(videojs.dom.createEl("div", undefined, {
+                            class: "vjs-marker",
+                            style: `left: ${left}`,
+                        }));
                     }
                 });
+
+                const timeControl = player.getDescendant([
+                    "controlBar",
+                    "progressControl",
+                    "seekBar",
+                    "mouseTimeDisplay",
+                    "timeTooltip",
+                ]) as Component & { update: (rect: DOMRect, point: number, time: string) => void, write: (time: string) => void };
+                timeControl.update = function (_: DOMRect, point: number, time: string) {
+                    const currentTime = point * (player.duration() || 0);
+                    const currentChapter = chapters.findIndex(({ end_time }) => end_time >= currentTime);
+
+                    if (currentChapter > -1) {
+                        const { title } = chapters[currentChapter];
+
+                        videojs.dom.emptyEl(this.el());
+                        return videojs.dom.appendContent(this.el(), [
+                            videojs.dom.createEl("strong", undefined, undefined, title),
+                            videojs.dom.createEl("span", undefined, undefined, `(${time})`)
+                        ]);
+                    }
+
+                    this.write(time);
+                };
             }
+
+            // Sponsorblock
+            const segments: { segment: [number, number] }[] = await (await fetch(`https://sponsor.ajay.app/api/skipSegments?videoID=${id}`)).json();
+            player.on("timeupdate", () => {
+                const time = player.currentTime() || 0;
+                for (const seg of segments) {
+                    const [start, end] = seg.segment;
+                    if (time >= start && time < end) {
+                        player.currentTime(end);
+                        break;
+                    }
+                }
+            });
         })
 
 
@@ -92,17 +133,17 @@ export default function Watch({ id }: { id: string }) {
                 const videoBaseUrl = `/v1/assets/${video.channel_id}/${video.id}`;
 
                 const languages = new Intl.DisplayNames(["en"], { type: "language" });
-                const captions = video?.caption_langs ? video?.caption_langs.split(",").map((code) => ({
+                const captions = video?.caption_langs ? video?.caption_langs.map((code) => ({
                     kind: "captions",
                     src: `${videoBaseUrl}/sub.${code}.vtt`,
                     srclang: code,
                     label: languages.of(code) || code,
-                    default: ["en", "en-GB"].includes(code),
+                    default: ["en", "en-US", "en-GB"].includes(code),
                 })) : [];
 
                 return <>
                     <h2>{video.title}</h2>
-                    <VideoPlayer src = {`${videoBaseUrl}/video.mkv`} poster = {`${videoBaseUrl}/cover.webp`} id = {id} captions = {captions} />
+                    <VideoPlayer src = {`${videoBaseUrl}/video.mkv`} poster = {`${videoBaseUrl}/cover.webp`} id = {id} chapters = {video.chapters} captions = {captions} />
                     <hr />
                     <span>
                         <Link href = {`/channel/${channel.preferred_id}`}>{channel.name}</Link> ({channel.subscribers.toLocaleString()} subscribers) <br />

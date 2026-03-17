@@ -9,5 +9,8 @@ export default defineConfig({
         proxy: {
             "/v1": "http://localhost:8000"
         }
+    },
+    build: {
+        chunkSizeWarningLimit: 700,  // To silence the Video.js chunk warning
     }
 });

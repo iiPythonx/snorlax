@@ -1,13 +1,15 @@
 # Copyright (c) 2025-2026 iiPython
 
+import json
 import string
 import typing
 import aiosqlite
 from snorlax.config import ROOT, config
 
-VIDEO_PARAMS           = ("id", "title", "description", "view_count", "like_count", "duration_string", "timestamp", "channel_id", "caption_langs")
+VIDEO_PARAMS           = ("id", "title", "description", "view_count", "like_count", "duration_string", "timestamp", "channel_id", "caption_langs", "chapters")
 VIDEO_W_CHANNEL_PARAMS = VIDEO_PARAMS + ("channel_name", "channel_preferred_id")
 CHANNEL_PARAMS         = ("id", "handle", "name", "subscribers", "preferred_id")
+JSON_COLUMNS           = ("caption_langs", "chapters")
 
 SEARCH_VALID_TOKENS = string.ascii_letters + string.digits + " "
 
@@ -36,6 +38,21 @@ class Database:
     async def close(self) -> None:
         await self.db.commit()
         await self.db.close()
+
+    # JSON storage
+    @staticmethod
+    def _serialize(result: dict[str, typing.Any]) -> dict[str, typing.Any]:
+        return result | {
+            k: json.dumps(v)
+            for k, v in result.items() if k in JSON_COLUMNS
+        }        
+
+    @staticmethod
+    def _deserialize(result: dict[str, typing.Any]) -> dict[str, typing.Any]:
+        return result | {
+            k: json.loads(v)
+            for k, v in result.items() if k in JSON_COLUMNS
+        }
 
     # Querying
     @staticmethod
@@ -93,7 +110,7 @@ class Database:
                 params.append(offset)
 
         async with self.db.execute_fetchall(query, params) as rows:
-            return [dict(zip(columns, row)) for row in rows], count_result[0]
+            return [self._deserialize(dict(zip(columns, row))) for row in rows], count_result[0]
 
     # Channels
     async def add_channel(self, id: str, handle: str | None, name: str, subscribers: int) -> None:
@@ -116,6 +133,7 @@ class Database:
 
     # Videos
     async def add_video(self, **video) -> None:
+        video = self._serialize(video)
         await self.db.execute(
             f"INSERT OR IGNORE INTO videos ({', '.join(VIDEO_PARAMS)}) VALUES ({', '.join('?' for _ in VIDEO_PARAMS)})",
             tuple(video[p] for p in VIDEO_PARAMS)
@@ -125,7 +143,7 @@ class Database:
     async def get_video(self, video_id: str) -> dict[str, typing.Any] | None:
         async with self.db.execute(f"SELECT {', '.join(VIDEO_W_CHANNEL_PARAMS)} FROM videos_w_channel WHERE id = ?", (video_id,)) as result:
             result = await result.fetchone()
-            return dict(zip(VIDEO_W_CHANNEL_PARAMS, result)) if result else None
+            return self._deserialize(dict(zip(VIDEO_W_CHANNEL_PARAMS, result))) if result else None
 
     async def get_videos(self, channel_id: str | None = None, limit: int | None = None, page: int | None = 1) -> tuple[list[dict], int]:
         return await self._fetch(

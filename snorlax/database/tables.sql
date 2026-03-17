@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS videos (
     timestamp       INTEGER,
     channel_id      TEXT,
     caption_langs   TEXT,
+    chapters        TEXT,
     FOREIGN KEY(channel_id) REFERENCES channels(id) ON DELETE CASCADE
 );
 

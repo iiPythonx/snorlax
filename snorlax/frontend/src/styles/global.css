@@ -142,3 +142,29 @@ button {
     height: auto;
     width: 100%;
 }
+
+/* Video,js Chapters */
+.video-js .vjs-slider-bar::before {
+    z-index: 2;
+}
+
+.vjs-marker {
+    position: absolute;
+    background: #2b333fb3;
+    width: 1px;
+    top: 0;
+    bottom: 0;
+    z-index: 1;
+}
+
+.video-js .vjs-progress-control .vjs-mouse-display {
+    z-index: 2;
+}
+
+.vjs-progress-control:hover .vjs-mouse-display .vjs-time-tooltip {
+    width: max-content;
+    left: 50%;
+    display: flex;
+    gap: 0.2em;
+    transform: translateX(-50%);
+}

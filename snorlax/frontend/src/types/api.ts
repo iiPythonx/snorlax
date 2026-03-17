@@ -1,3 +1,9 @@
+export type Chapter = {
+    start_time: number;
+    title:      string;
+    end_time:   number;
+}
+
 export type Video = {
     id:                   string;
     title:                string;
@@ -7,7 +13,8 @@ export type Video = {
     duration_string:      string;
     timestamp:            number;
     channel_id:           string;
-    caption_langs:        string;
+    caption_langs:        string[];
+    chapters:             Chapter[];
     channel_name:         string;
     channel_preferred_id: string;
 };
