@@ -83,17 +83,20 @@ function VideoPlayer({ src, poster, id, chapters, captions }: { src: string, pos
             }
 
             // Sponsorblock
-            const segments: { segment: [number, number] }[] = await (await fetch(`https://sponsor.ajay.app/api/skipSegments?videoID=${id}`)).json();
-            player.on("timeupdate", () => {
-                const time = player.currentTime() || 0;
-                for (const seg of segments) {
-                    const [start, end] = seg.segment;
-                    if (time >= start && time < end) {
-                        player.currentTime(end);
-                        break;
+            const response = await fetch(`https://sponsor.ajay.app/api/skipSegments?videoID=${id}`);
+            if (response.status === 200) {
+                const segments: { segment: [number, number] }[] = await response.json();
+                player.on("timeupdate", () => {
+                    const time = player.currentTime() || 0;
+                    for (const seg of segments) {
+                        const [start, end] = seg.segment;
+                        if (time >= start && time < end) {
+                            player.currentTime(end);
+                            break;
+                        }
                     }
-                }
-            });
+                });
+            };
         })
 
 
