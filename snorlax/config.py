@@ -2,6 +2,7 @@
 
 import tomllib
 from pathlib import Path
+
 from pydantic import BaseModel, DirectoryPath, FilePath
 
 ROOT = Path(__file__).parent

@@ -1,14 +1,14 @@
 # Copyright (c) 2025-2026 iiPython
 
-import typing
 import asyncio
 import traceback
+import typing
 
 from yt_dlp import YoutubeDL
 from yt_dlp.utils import DownloadError
 
 from snorlax.config import config
-from snorlax.database import db, VIDEO_PARAMS
+from snorlax.database import VIDEO_PARAMS, db
 
 TEMP_PATH = config.snorlax.video_path / "in_progress"
 

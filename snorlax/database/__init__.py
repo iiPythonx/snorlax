@@ -3,7 +3,9 @@
 import json
 import string
 import typing
+
 import aiosqlite
+
 from snorlax.config import ROOT, config
 
 VIDEO_PARAMS           = ("id", "title", "description", "view_count", "like_count", "duration_string", "timestamp", "channel_id", "caption_langs", "chapters")
@@ -45,7 +47,7 @@ class Database:
         return result | {
             k: json.dumps(v)
             for k, v in result.items() if k in JSON_COLUMNS
-        }        
+        }
 
     @staticmethod
     def _deserialize(result: dict[str, typing.Any]) -> dict[str, typing.Any]:

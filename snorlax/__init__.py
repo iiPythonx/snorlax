@@ -1,20 +1,19 @@
 # Copyright (c) 2025-2026 iiPython
 
 # Modules
-import typing
 import asyncio
+import typing
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-
 from fastapi.websockets import WebSocketState
 from pydantic import Field
 
 from snorlax.config import ROOT, config
-from snorlax.ingest import Snorlax
 from snorlax.database import db
+from snorlax.ingest import Snorlax
 
 # Handle API
 @asynccontextmanager
@@ -83,7 +82,7 @@ async def print_job_updates(websocket: WebSocket) -> None:
 async def route_v1_jobs(websocket: WebSocket) -> None:
     await websocket.accept()
     task = asyncio.create_task(print_job_updates(websocket))
-    
+
     # Receive client data
     try:
         while websocket.application_state == WebSocketState.CONNECTED:
