@@ -21,6 +21,8 @@ type Caption = {
     default: boolean;
 }
 
+const INTL = new Intl.DisplayNames("en-US", { type: "language" });
+
 function VideoPlayer({ src, poster, id, chapters, captions }: { src: string, poster: string, id: string, chapters: Chapter[], captions: Caption[] }) {
     const videoReference = useRef<HTMLVideoElement>(null);
     const playerReference = useRef<Player>(null);
@@ -146,13 +148,16 @@ export default function Watch({ id }: { id: string }) {
 
                 const videoBaseUrl = `/v1/assets/${video.channel_id}/${video.id}`;
 
-                const languages = new Intl.DisplayNames(["en"], { type: "language" });
+                // Handle captions
+                const selectedLanguages: string[] = JSON.parse(localStorage.getItem("langs") || "[]");
+                const selected =  selectedLanguages.find(lang => video?.caption_langs.includes(lang));
+
                 const captions = video?.caption_langs ? video?.caption_langs.map((code) => ({
                     kind: "captions",
                     src: `${videoBaseUrl}/sub.${code}.vtt`,
                     srclang: code,
-                    label: languages.of(code) || code,
-                    default: ["en", "en-US", "en-GB"].includes(code),
+                    label: INTL.of(code) || code,
+                    default: code === selected
                 })) : [];
 
                 return <>

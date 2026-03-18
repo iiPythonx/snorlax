@@ -6,6 +6,7 @@ import NotFound from "./pages/404.tsx";
 import Search from "./pages/search.tsx";
 import Channel from "./pages/channel.tsx";
 import Manage from "./pages/manage.tsx";
+import Settings from "./pages/settings.tsx";
 
 export default function App() {
     return (
@@ -19,6 +20,7 @@ export default function App() {
                 {params => <Channel id = {params.id} />}
             </Route>
             <Route path = "/manage" component = {Manage} />
+            <Route path = "/settings" component = {Settings} />
             <Route component = {NotFound} />
         </Switch>
     );

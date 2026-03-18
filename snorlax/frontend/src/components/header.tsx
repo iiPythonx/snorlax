@@ -9,6 +9,7 @@ export default function Header() {
             </h2>
             <Link href = "/search" class = "pad-left">Search</Link>
             <Link href = "/manage">Manage</Link>
+            <Link href = "/settings">Settings</Link>
         </section>
         <hr />
     </>;
