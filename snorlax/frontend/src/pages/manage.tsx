@@ -35,26 +35,8 @@ export default function Manage() {
         const url = prompt("Target URL (video/channel url)");
         if (!url) return;
 
-        const regex: Record<string, RegExp> = {
-            video:   /(?:\.be\/|\?v=)([\w-]+)/,
-            channel: /(?:\/@|l\/)([\w-]+)/
-        };
-
-        let type: "video" | "channel" | null = null;
-        let id: string | null = null;
-
-        for (const [key, pattern] of Object.entries(regex)) {
-            const match = url.match(pattern);
-            if (match) {
-                type = key as "video" | "channel";
-                id = match[1];
-                break;
-            }
-        }
-        if (!(type && id)) return alert("URL could not be processed.");
-
         // Send off job
-        socketReference.current?.send(JSON.stringify({ type: `add-${type}-job`, id: type === "channel" ? `@${id}` : id }));
+        socketReference.current?.send(JSON.stringify({ type: "add-job", url }));
     }
 
     // Handle canceling job

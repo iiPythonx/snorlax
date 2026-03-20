@@ -13,8 +13,8 @@ from snorlax.database import VIDEO_PARAMS, db
 TEMP_PATH = config.snorlax.video_path / "in_progress"
 
 class Job:
-    def __init__(self, video_id: str) -> None:
-        self.video_id = video_id
+    def __init__(self, video_data: dict[str, typing.Any]) -> None:
+        self.info = video_data
         self.ytdl = YoutubeDL({
             "writesubtitles": True,
             "writethumbnail": True,
@@ -32,7 +32,14 @@ class Job:
             "js_runtimes": {"bun": {}}
         })  # type: ignore
 
-        self._progress: dict[str, typing.Any] = {}
+        self._progress: dict[str, typing.Any] = {
+            "progress": 0,
+            "status": "queued",
+            "title": video_data["title"],
+            "channel": video_data["uploader"],
+            "channel_preferred_id": video_data.get("uploader_id") or video_data["channel_id"],
+            "timestamp": video_data["timestamp"]
+        }
         self._canceled: bool = False
 
     def _progress_hook(self, data: dict) -> None:
@@ -42,13 +49,9 @@ class Job:
         if (data["status"] not in {"finished", "downloading"}) or ("title" not in data["info_dict"]):
             return
 
-        self._progress = {
+        self._progress |= {
             "progress": round((data["downloaded_bytes"] / (data["total_bytes"] or 0.1)) * 100),
             "status": data["status"] if data["status"] != "finished" else "remuxing",
-            "title": data["info_dict"]["title"],
-            "channel": data["info_dict"]["uploader"],
-            "channel_preferred_id": data["info_dict"].get("uploader_id") or data["info_dict"]["channel_id"],
-            "timestamp": data["info_dict"]["timestamp"],
             "speed": round((data["speed"] or 0) / (1024 ** 2), 2),
             "eta": round((data["total_bytes"] - data["downloaded_bytes"]) / (data["speed"] or 0.1))
         }
@@ -63,14 +66,13 @@ class Job:
     def canceled(self) -> bool:
         return self._canceled
 
-    async def _extract_info(self, download: bool = True) -> dict[str, typing.Any] | None:
+    async def _download_video(self) -> None:
         try:
-            info: dict[str, typing.Any] = await asyncio.to_thread(self.ytdl.extract_info, f"https://youtu.be/{self.video_id}", download)  # type: ignore
-            return info
+            await asyncio.to_thread(self.ytdl.extract_info, f"https://youtu.be/{self.info['id']}")
 
         except Exception as e:
             if self._canceled:
-                for file in TEMP_PATH.glob(f"{self.video_id}*"):
+                for file in TEMP_PATH.glob(f"{self.info['id']}*"):
                     file.unlink()
 
             self._progress |= {"progress": 0, "status": "failed"}
@@ -82,45 +84,29 @@ class Job:
             TEMP_PATH.mkdir(parents = True)
 
         # Handle video data
-        existing_video = await db.get_video(self.video_id)
+        existing_video = await db.get_video(self.info["id"])
         if existing_video is not None:
+            self._progress["status"] = "finished"
             return  # The video already exists
 
-        info = await self._extract_info()
-        if info is None:
-            return
-
+        await self._download_video()
         self._progress["status"] = "finished"
 
         # Save everything to database
-        channel = await db.get_channel(info["channel_id"])
+        channel = await db.get_channel(self.info["channel_id"])
         if channel is None:
-            await db.add_channel(info["channel_id"], info.get("uploader_id"), info["uploader"], info["channel_follower_count"])
+            await db.add_channel(self.info["channel_id"], self.info.get("uploader_id"), self.info["uploader"], self.info["channel_follower_count"])
 
-        info |= {"caption_langs": list((info["requested_subtitles"] or {}).keys())}
-        await db.add_video(**{k: v for k, v in info.items() if k in VIDEO_PARAMS})  # type: ignore
+        self.info |= {"caption_langs": list((self.info["requested_subtitles"] or {}).keys())}
+        await db.add_video(**{k: v for k, v in self.info.items() if k in VIDEO_PARAMS})  # type: ignore
 
         # Reorganize everything
-        video_path = config.snorlax.video_path / info["channel_id"] / self.video_id
+        video_path = config.snorlax.video_path / self.info["channel_id"] / self.info["id"]
         if not video_path.is_dir():
             video_path.mkdir(parents = True)
 
-        for file in TEMP_PATH.glob(f"{self.video_id}*"):
-            file.rename(video_path / file.name.replace(self.video_id, {".webp": "cover", ".vtt": "sub", ".mkv": "video"}[file.suffix]))
-
-    async def fetch_info(self) -> None:
-        info = await self._extract_info(False)
-        if info is None:
-            return
-
-        self._progress |= {
-            "progress": 0,
-            "status": "queued",
-            "title": info["title"],
-            "channel": info["uploader"],
-            "channel_id": info["uploader_id"],
-            "timestamp": info["timestamp"]
-        }
+        for file in TEMP_PATH.glob(f"{self.info['id']}*"):
+            file.rename(video_path / file.name.replace(self.info["id"], {".webp": "cover", ".vtt": "sub", ".mkv": "video"}[file.suffix]))
 
 # Handle snoring and laxing
 class Snorlax:
@@ -129,7 +115,7 @@ class Snorlax:
         self.queue: asyncio.Queue[Job] = asyncio.Queue()
 
         # Metadata-only YouTube instance
-        self.ytdl = YoutubeDL({"quiet": True, "extract_flat": True, "skip_download": "yes"})
+        self.ytdl = YoutubeDL({"quiet": True, "extract_flat": True, "skip_download": "yes", "js_runtimes": {"bun": {}}})
 
     async def process_queue(self) -> None:
         while True:
@@ -141,26 +127,37 @@ class Snorlax:
             await job.start()
             self.queue.task_done()
 
-    async def fetch_channel(self, channel_id: str) -> None:
+    async def fetch_url(self, url: str) -> None:
+
+        # YouTube: Remove playlist data from video watch URL
+        # This prevents us from getting stuck in a loop of processing the same URL endlessly
+        if "/playlist" not in url:
+            for item in {"?list=", "&list="}:
+                url = url.split(item)[0]
+
+        # Handle extraction
         try:
-            info: dict[str, typing.Any] = await asyncio.to_thread(self.ytdl.extract_info, f"https://youtube.com/{channel_id}/videos", download = False)  # type: ignore
-            if "entries" not in info:
-                raise RuntimeError("failed to extract video entries from channel")
+            info: dict[str, typing.Any] = await asyncio.to_thread(self.ytdl.extract_info, url, download = False)  # type: ignore
+            if (media_type := info.get("_type", info.get("media_type"))) not in {"playlist", "video"}:
+                raise ValueError(f"Received an unsupported media type: {media_type}")
 
-            for video in info["entries"]:
-                await self.fetch_video(video["url"].split("=")[-1])
+            match media_type:
+                case "playlist":
+                    for item in info["entries"]:
+                        item_url = item.get("url") or item.get("webpage_url")
+                        if item_url is None:
+                            continue
 
-        except DownloadError:
-            pass
+                        await self.fetch_url(item_url)
 
-    async def fetch_video(self, video_id: str) -> None:
-        self.jobs[video_id] = Job(video_id)
-        await self.jobs[video_id].fetch_info()
-        await self.queue.put(self.jobs[video_id])
+                case "video":
+                    self.jobs[info["id"]] = Job(info)
+                    await self.queue.put(self.jobs[info["id"]])
+
+        except Exception:
+            traceback.print_exc()
 
     async def cancel_job(self, video_id: str) -> None:
-        if video_id not in self.jobs:
-            return
-
-        self.jobs[video_id].cancel()
-        del self.jobs[video_id]
+        if video_id in self.jobs:
+            self.jobs[video_id].cancel()
+            del self.jobs[video_id]

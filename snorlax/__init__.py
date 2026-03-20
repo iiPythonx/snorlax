@@ -90,11 +90,8 @@ async def route_v1_jobs(websocket: WebSocket) -> None:
                 case {"type": "cancel-job", "id": video_id}:
                     await app.state.snorlax.cancel_job(video_id)
 
-                case {"type": "add-video-job", "id": video_id}:
-                    await app.state.snorlax.fetch_video(video_id)
-
-                case {"type": "add-channel-job", "id": channel_id}:
-                    await app.state.snorlax.fetch_channel(channel_id)
+                case {"type": "add-job", "url": job_url}:
+                    await app.state.snorlax.fetch_url(job_url)
 
     except WebSocketDisconnect:
         task.cancel()
