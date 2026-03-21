@@ -39,14 +39,7 @@ This name duplication shouldn't be a problem though, other then making the chann
 
 ### API
 
-```
-/v1/videos
-/v1/channels
-/v1/video/VIDEO_ID
-/v1/channel/CHANNEL_ID
-/v1/jobs
-/v1/search
-```
+Current API version is v1, docs available [here](.github/docs/v1.md).
 
 ### Screenshot
 
