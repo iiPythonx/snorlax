@@ -138,7 +138,7 @@ export default function Watch({ id }: { id: string }) {
 
     return <>
         <Header />
-        {video && channel ? <>
+        {video && channel && <>
             {(() => {
                 let description = video.description.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
                 description = description.replace(/(https?:\/\/[^\s]+)/g, `<a href = "$1" target = "_blank" rel = "noopener noreferrer">$1</a>`);
@@ -172,6 +172,6 @@ export default function Watch({ id }: { id: string }) {
                     <pre style = "margin-bottom: 20px;" dangerouslySetInnerHTML = {{ __html: description }}></pre>
                 </>;
             })()}
-        </> : <span>Loading video information...</span>}
+        </>}
     </>;
 }

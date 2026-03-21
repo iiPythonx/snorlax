@@ -15,7 +15,7 @@ export default function Paginator({ type, endpoint, limit = 8, params }: Paginat
     const [page, setPage] = useState(1);
     const [total, setTotal] = useState(1);
     const [items, setItems] = useState<(Video | Channel)[]>([]);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [loadTime, setLoadTime] = useState<number | null>(null);
 
     async function fetchPage() {
