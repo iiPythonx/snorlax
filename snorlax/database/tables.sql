@@ -1,3 +1,5 @@
+PRAGMA foreign_keys = ON;
+
 CREATE TABLE IF NOT EXISTS channels (
     id           TEXT PRIMARY KEY,
     handle       TEXT UNIQUE,

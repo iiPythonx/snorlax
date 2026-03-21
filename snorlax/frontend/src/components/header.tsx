@@ -1,12 +1,12 @@
 import { useState } from "preact/hooks";
 import { Link } from "wouter";
+import { useHeaderActions } from "../hooks/useHeaderActions";
 
 export default function Header() {
+    const { actions } = useHeaderActions();
     const [dropdownVisible, setDropdownVisible] = useState<boolean>(false);
 
-    const toggleManageDropdown = () => {
-        setDropdownVisible(!dropdownVisible);
-    };
+    const toggleManageDropdown = () => setDropdownVisible(v => !v);
 
     return <>
         <section class = "flex snorlax-head">
@@ -21,6 +21,12 @@ export default function Header() {
                     <div className = "dropdown flex column">
                         <Link href = "/jobs">Jobs</Link>
                         <Link href = "/settings">Settings</Link>
+                        {actions.length > 0 && (
+                            <>
+                                <hr />
+                                {actions.map(action => <button onClick = {action.onClick}>{action.label}</button>)}
+                            </>
+                        )}
                     </div>
                 )}
             </button>

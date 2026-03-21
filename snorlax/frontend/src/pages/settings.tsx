@@ -1,5 +1,4 @@
 import { useEffect, useState } from "preact/hooks";
-import Header from "../components/header";
 import type { TargetedInputEvent } from "preact";
 
 const VALID_LANGUAGES = [
@@ -48,7 +47,6 @@ export default function Settings() {
     }
 
     return <>
-        <Header />
         <h2>Settings</h2>
         <fieldset className = "flex column">
             <legend>Preferred Languages</legend>

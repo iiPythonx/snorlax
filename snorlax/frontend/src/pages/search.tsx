@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
-import Header from "../components/header";
 import Paginator from "../components/paginator";
 
 export default function Search() {
@@ -14,7 +13,6 @@ export default function Search() {
     const params = useMemo(() => ({ query: debouncedQuery }), [debouncedQuery]);
 
     return <>
-        <Header />
         <main>
             <input
                 type = "text"

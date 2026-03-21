@@ -3,9 +3,10 @@
 # Modules
 import asyncio
 import typing
+from shutil import rmtree
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import BackgroundTasks, Depends, FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.websockets import WebSocketState
@@ -40,11 +41,16 @@ async def route_v1_channels(pagination: typing.Annotated[dict, Depends(paginatio
     channels, total = await db.get_channels(**pagination)
     return JSONResponse({"code": 200, "data": {"items": channels, "total": total}})
 
-@app.get("/v1/channel/{channel_id}")
-async def route_v1_channel(channel_id: str) -> JSONResponse:
+@app.api_route("/v1/channel/{channel_id}", methods = ["GET", "DELETE"])
+async def route_v1_channel(request: Request, channel_id: str, background_tasks: BackgroundTasks) -> JSONResponse:
     channel_data = await db.get_channel(channel_id)
     if channel_data is None:
         return JSONResponse({"code": 404, "data": {"message": "The specified channel does not exist."}}, status_code = 404)
+
+    if request.method == "DELETE":
+        await db.delete_channel(channel_data["id"])
+        background_tasks.add_task(rmtree, config.snorlax.video_path / channel_data["id"], True)
+        return JSONResponse({"code": 200})
 
     return JSONResponse({"code": 200, "data": channel_data})
 
@@ -53,11 +59,16 @@ async def route_v1_videos(pagination: typing.Annotated[dict, Depends(pagination_
     videos, total = await db.get_videos(channel_id = channel_id, **pagination)
     return JSONResponse({"code": 200, "data": {"items": videos, "total": total}})
 
-@app.get("/v1/video/{video_id}")
-async def route_v1_video(video_id: str) -> JSONResponse:
+@app.api_route("/v1/video/{video_id}", methods = ["GET", "DELETE"])
+async def route_v1_video(request: Request, video_id: str, background_tasks: BackgroundTasks) -> JSONResponse:
     video_data = await db.get_video(video_id)
     if video_data is None:
         return JSONResponse({"code": 404, "data": {"message": "The specified video does not exist."}}, status_code = 404)
+
+    if request.method == "DELETE":
+        await db.delete_video(video_id)
+        background_tasks.add_task(rmtree, config.snorlax.video_path / video_data["channel_id"] / video_id, True)
+        return JSONResponse({"code": 200})
 
     return JSONResponse({"code": 200, "data": video_data})
 

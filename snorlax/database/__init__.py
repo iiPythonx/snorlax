@@ -115,8 +115,8 @@ class Database:
             return [self._deserialize(dict(zip(columns, row))) for row in rows], count_result[0]
 
     # Channels
-    async def add_channel(self, id: str, handle: str | None, name: str, subscribers: int) -> None:
-        await self.db.execute("INSERT OR IGNORE INTO channels VALUES (?, ?, ?, ?)", (id, handle, name, subscribers))
+    async def add_channel(self, channel_id: str, handle: str | None, name: str, subscribers: int) -> None:
+        await self.db.execute("INSERT OR IGNORE INTO channels VALUES (?, ?, ?, ?)", (channel_id, handle, name, subscribers))
         await self.db.commit()
 
     async def get_channel(self, channel_id: str) -> dict[str, typing.Any] | None:
@@ -132,6 +132,10 @@ class Database:
             limit = limit,
             page = page
         )
+
+    async def delete_channel(self, channel_id: str) -> None:
+        await self.db.execute("DELETE FROM channels WHERE id = ?", (channel_id,))
+        await self.db.commit()
 
     # Videos
     async def add_video(self, **video) -> None:
@@ -171,5 +175,9 @@ class Database:
             limit = limit,
             page = page
         )
+
+    async def delete_video(self, video_id: str) -> None:
+        await self.db.execute("DELETE FROM videos WHERE id = ?", (video_id,))
+        await self.db.commit()
 
 db = Database()

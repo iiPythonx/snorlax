@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "preact/hooks";
-import Header from "../components/header";
 import { Link } from "wouter";
 import { humanizeTime } from "../lib/time";
 
@@ -49,7 +48,6 @@ export default function Jobs() {
     }
 
     return <>
-        <Header />
         <section className = "flex column">
             <div className = "flex">
                 <h2>Current Jobs</h2>

@@ -626,7 +626,7 @@ wheels = [
 
 [[package]]
 name = "snorlax"
-version = "0.25.4"
+version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "aiosqlite" },

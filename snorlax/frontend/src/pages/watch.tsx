@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "preact/hooks";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 import type Player from "video.js/dist/types/player";
 import type Component from "video.js/dist/types/component";
@@ -7,11 +7,11 @@ import type Component from "video.js/dist/types/component";
 import "video.js/dist/video-js.css";
 
 import { humanizeTime } from "../lib/time";
-import Header from "../components/header";
 
 import { useVideo } from "../hooks/useVideo";
 import { useChannel } from "../hooks/useChannel";
 import type { Chapter } from "../types/api";
+import { useHeaderActions } from "../hooks/useHeaderActions";
 
 type Caption = {
     src:     string;
@@ -129,6 +129,8 @@ function VideoPlayer({ src, poster, id, chapters, captions }: { src: string, pos
 export default function Watch({ id }: { id: string }) {
     const { video, errored: videoError } = useVideo(id);
     const { channel, errored: channelError } = useChannel(video?.channel_id ?? "");
+    const { setActions } = useHeaderActions();
+    const [, navigate] = useLocation();
 
     if (videoError || channelError) return <p>
         Snorlax failed to make an API request for this page.
@@ -136,42 +138,52 @@ export default function Watch({ id }: { id: string }) {
         The video might not exist, or there was a server issue.
     </p>;
 
-    return <>
-        <Header />
-        {video && channel && <>
-            {(() => {
-                let description = video.description.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                description = description.replace(/(https?:\/\/[^\s]+)/g, `<a href = "$1" target = "_blank" rel = "noopener noreferrer">$1</a>`);
+    useEffect(() => {
+        setActions([
+            {
+                label: "Remove Video",
+                onClick: async () => {
+                    await fetch(`/v1/video/${id}`, { method: "DELETE" });
+                    navigate("/");
+                },
+            },
+        ]);
+        return () => setActions([]);
+    }, [id]);
 
-                const date = new Date(video.timestamp * 1000);
-                const date_string = `${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getDate().toString().padStart(2, "0")}/${date.getFullYear()}`;
+    return video && channel && <>
+        {(() => {
+            let description = video.description.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            description = description.replace(/(https?:\/\/[^\s]+)/g, `<a href = "$1" target = "_blank" rel = "noopener noreferrer">$1</a>`);
 
-                const videoBaseUrl = `/v1/assets/${video.channel_id}/${video.id}`;
+            const date = new Date(video.timestamp * 1000);
+            const date_string = `${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getDate().toString().padStart(2, "0")}/${date.getFullYear()}`;
 
-                // Handle captions
-                const selectedLanguages: string[] = JSON.parse(localStorage.getItem("langs") || "[]");
-                const selected =  selectedLanguages.find(lang => video?.caption_langs.includes(lang));
+            const videoBaseUrl = `/v1/assets/${video.channel_id}/${video.id}`;
 
-                const captions = video?.caption_langs ? video?.caption_langs.map((code) => ({
-                    kind: "captions",
-                    src: `${videoBaseUrl}/sub.${code}.vtt`,
-                    srclang: code,
-                    label: INTL.of(code) || code,
-                    default: code === selected
-                })) : [];
+            // Handle captions
+            const selectedLanguages: string[] = JSON.parse(localStorage.getItem("langs") || "[]");
+            const selected =  selectedLanguages.find(lang => video?.caption_langs.includes(lang));
 
-                return <>
-                    <h2>{video.title}</h2>
-                    <VideoPlayer src = {`${videoBaseUrl}/video.mkv`} poster = {`${videoBaseUrl}/cover.webp`} id = {id} chapters = {video.chapters || []} captions = {captions} />
-                    <hr />
-                    <span>
-                        <Link href = {`/channel/${channel.preferred_id}`}>{channel.name}</Link> ({channel.subscribers.toLocaleString()} subscribers) <br />
-                        {video.duration_string} • {video.view_count.toLocaleString()} views • {video.like_count.toLocaleString()} likes • {date_string} ({humanizeTime(video.timestamp)})
-                    </span>
-                    <hr />
-                    <pre style = "margin-bottom: 20px;" dangerouslySetInnerHTML = {{ __html: description }}></pre>
-                </>;
-            })()}
-        </>}
+            const captions = video?.caption_langs ? video?.caption_langs.map((code) => ({
+                kind: "captions",
+                src: `${videoBaseUrl}/sub.${code}.vtt`,
+                srclang: code,
+                label: INTL.of(code) || code,
+                default: code === selected
+            })) : [];
+
+            return <>
+                <h2>{video.title}</h2>
+                <VideoPlayer src = {`${videoBaseUrl}/video.mkv`} poster = {`${videoBaseUrl}/cover.webp`} id = {id} chapters = {video.chapters || []} captions = {captions} />
+                <hr />
+                <span>
+                    <Link href = {`/channel/${channel.preferred_id}`}>{channel.name}</Link> ({channel.subscribers.toLocaleString()} subscribers) <br />
+                    {video.duration_string} • {video.view_count.toLocaleString()} views • {video.like_count.toLocaleString()} likes • {date_string} ({humanizeTime(video.timestamp)})
+                </span>
+                <hr />
+                <pre style = "margin-bottom: 20px;" dangerouslySetInnerHTML = {{ __html: description }}></pre>
+            </>;
+        })()}
     </>;
 }
