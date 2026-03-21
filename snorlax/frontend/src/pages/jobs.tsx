@@ -16,7 +16,7 @@ type Job = {
 
 type JobMap = Record<string, Job>
 
-export default function Manage() {
+export default function Jobs() {
     const [jobs, setJobs] = useState<JobMap>({});
     const socketReference = useRef<WebSocket | null>(null);
 

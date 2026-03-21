@@ -60,10 +60,9 @@ fieldset {
 a.silent {
     width: fit-content;
     text-decoration: none;
-    
-    &:hover {
-        text-decoration: underline dashed;
-    }
+}
+a:not(.video-poster):hover {
+    text-decoration: underline dashed;
 }
 
 /* Button styling */
@@ -72,6 +71,7 @@ button {
     border: none;
     cursor: pointer;
     padding: 0px;
+    font: inherit;
 
     &[disabled] {
         opacity: .5;
@@ -138,6 +138,22 @@ button {
         image-rendering: pixelated;
         height: 24px;
         transition: rotate 1s ease;
+    }
+
+    button {
+        position: relative;
+    }
+
+    div.dropdown {
+        z-index: 2;
+        background: #000;
+        top: calc(100% + 10px);
+        position: absolute;
+        text-align: left;
+        left: -12px;
+
+        border: 1px solid #fff;
+        padding: 10px;
     }
 }
 

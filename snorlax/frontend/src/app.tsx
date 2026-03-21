@@ -5,7 +5,7 @@ import Watch from "./pages/watch.tsx";
 import NotFound from "./pages/404.tsx";
 import Search from "./pages/search.tsx";
 import Channel from "./pages/channel.tsx";
-import Manage from "./pages/manage.tsx";
+import Jobs from "./pages/jobs.tsx";
 import Settings from "./pages/settings.tsx";
 
 export default function App() {
@@ -19,7 +19,7 @@ export default function App() {
             <Route path = "/channel/:id">
                 {params => <Channel id = {params.id} />}
             </Route>
-            <Route path = "/manage" component = {Manage} />
+            <Route path = "/jobs" component = {Jobs} />
             <Route path = "/settings" component = {Settings} />
             <Route component = {NotFound} />
         </Switch>
