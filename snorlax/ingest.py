@@ -97,7 +97,7 @@ class Job:
         if channel is None:
             await db.add_channel(self.info["channel_id"], self.info.get("uploader_id"), self.info["uploader"], self.info["channel_follower_count"])
 
-        self.info |= {"caption_langs": list((self.info["requested_subtitles"] or {}).keys())}
+        self.info |= {"caption_langs": list((self.info["requested_subtitles"] or {}).keys()), "chapters": self.info["chapters"] or []}
         await db.add_video(**{k: v for k, v in self.info.items() if k in VIDEO_PARAMS})  # type: ignore
 
         # Reorganize everything

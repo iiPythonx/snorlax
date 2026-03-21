@@ -175,7 +175,7 @@ export default function Watch({ id }: { id: string }) {
 
             return <>
                 <h2>{video.title}</h2>
-                <VideoPlayer src = {`${videoBaseUrl}/video.mkv`} poster = {`${videoBaseUrl}/cover.webp`} id = {id} chapters = {video.chapters || []} captions = {captions} />
+                <VideoPlayer src = {`${videoBaseUrl}/video.mkv`} poster = {`${videoBaseUrl}/cover.webp`} id = {id} chapters = {video.chapters} captions = {captions} />
                 <hr />
                 <span>
                     <Link href = {`/channel/${channel.preferred_id}`}>{channel.name}</Link> ({channel.subscribers.toLocaleString()} subscribers) <br />

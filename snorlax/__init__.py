@@ -108,6 +108,7 @@ async def route_v1_jobs(websocket: WebSocket) -> None:
         task.cancel()
 
 # Mount assets
+config.snorlax.video_path.mkdir(exist_ok = True)
 app.mount("/v1/assets", StaticFiles(directory = config.snorlax.video_path))
 
 # Mount frontend
