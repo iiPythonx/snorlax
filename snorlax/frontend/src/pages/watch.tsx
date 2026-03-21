@@ -12,6 +12,7 @@ import { useVideo } from "../hooks/useVideo";
 import { useChannel } from "../hooks/useChannel";
 import type { Chapter } from "../types/api";
 import { useHeaderActions } from "../hooks/useHeaderActions";
+import { usePageTitle } from "../hooks/usePageTitle";
 
 type Caption = {
     src:     string;
@@ -139,7 +140,7 @@ export default function Watch({ id }: { id: string }) {
     </p>;
 
     useEffect(() => {
-        setActions([
+        setActions(video ? [
             {
                 label: "Remove Video",
                 onClick: async () => {
@@ -147,9 +148,11 @@ export default function Watch({ id }: { id: string }) {
                     navigate("/");
                 },
             },
-        ]);
+        ] : []);
         return () => setActions([]);
-    }, [id]);
+    }, [id, video]);
+
+    usePageTitle(video?.title || null);
 
     return video && channel && <>
         {(() => {

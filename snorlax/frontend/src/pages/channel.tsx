@@ -3,6 +3,7 @@ import Paginator from "../components/paginator";
 import { useChannel } from "../hooks/useChannel";
 import { useLocation } from "wouter";
 import { useHeaderActions } from "../hooks/useHeaderActions";
+import { usePageTitle } from "../hooks/usePageTitle";
 
 export default function ChannelPage({ id }: { id: string }) {
     const { channel, errored } = useChannel(id);
@@ -16,7 +17,7 @@ export default function ChannelPage({ id }: { id: string }) {
     </p>;
 
     useEffect(() => {
-        setActions([
+        setActions(channel ? [
             {
                 label: "Remove Channel",
                 onClick: async () => {
@@ -27,9 +28,11 @@ export default function ChannelPage({ id }: { id: string }) {
                     navigate("/");
                 },
             },
-        ]);
+        ] : []);
         return () => setActions([]);
-    }, [id]);
+    }, [id, channel]);
+
+    usePageTitle(channel?.name || null);
 
     return <>
         {channel && <>
