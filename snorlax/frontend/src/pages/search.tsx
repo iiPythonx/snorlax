@@ -24,7 +24,7 @@ export default function Search() {
             />
             <hr />
             <h2>Results</h2>
-            <Paginator endpoint = "search" type = "video" params = {params} />
+            <Paginator type = "video" endpoint = "videos" params = {params} />
         </main>
     </>;
 }

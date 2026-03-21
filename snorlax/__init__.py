@@ -55,8 +55,8 @@ async def route_v1_channel(request: Request, channel_id: str, background_tasks: 
     return JSONResponse({"code": 200, "data": channel_data})
 
 @app.get("/v1/videos")
-async def route_v1_videos(pagination: typing.Annotated[dict, Depends(pagination_parameters)], channel_id: str | None = None) -> JSONResponse:
-    videos, total = await db.get_videos(channel_id = channel_id, **pagination)
+async def route_v1_videos(pagination: typing.Annotated[dict, Depends(pagination_parameters)], channel_id: str | None = None, query: str | None = None) -> JSONResponse:
+    videos, total = await db.get_videos(query = query, channel_id = channel_id, **pagination)
     return JSONResponse({"code": 200, "data": {"items": videos, "total": total}})
 
 @app.api_route("/v1/video/{video_id}", methods = ["GET", "DELETE"])
@@ -71,11 +71,6 @@ async def route_v1_video(request: Request, video_id: str, background_tasks: Back
         return JSONResponse({"code": 200})
 
     return JSONResponse({"code": 200, "data": video_data})
-
-@app.get("/v1/search")
-async def route_v1_search(pagination: typing.Annotated[dict, Depends(pagination_parameters)], query: str) -> JSONResponse:
-    videos, total = await db.search_videos(query, **pagination)
-    return JSONResponse({"code": 200, "data": {"items": videos, "total": total}})
 
 async def print_job_updates(websocket: WebSocket) -> None:
     while True:

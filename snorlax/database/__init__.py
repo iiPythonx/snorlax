@@ -151,27 +151,32 @@ class Database:
             result = await result.fetchone()
             return self._deserialize(dict(zip(VIDEO_W_CHANNEL_PARAMS, result))) if result else None
 
-    async def get_videos(self, channel_id: str | None = None, limit: int | None = None, page: int | None = 1) -> tuple[list[dict], int]:
+    async def get_videos(
+        self,
+        query: str | None = None,
+        channel_id: str | None = None,
+        limit: int | None = None,
+        page: int | None = 1
+    ) -> tuple[list[dict], int]:
+        if query is not None:
+            query = "".join(c for c in query if c in SEARCH_VALID_TOKENS)
+            if not query.strip():
+                return [], 0
+
+            return await self._fetch(
+                table = "videos_fts f",
+                columns = VIDEO_W_CHANNEL_PARAMS,
+                filters = [("videos_fts", "MATCH", " ".join(f"{word}*" for word in query.split()))],
+                joins = ["JOIN videos_w_channel v ON v.rowid = f.rowid"],
+                order_by = "bm25(videos_fts)",
+                limit = limit,
+                page = page
+            )
         return await self._fetch(
             table = "videos_w_channel",
             columns = VIDEO_W_CHANNEL_PARAMS,
             filters = [("channel_id", "=", channel_id)] if channel_id is not None else [],
             order_by = "timestamp DESC",
-            limit = limit,
-            page = page
-        )
-
-    async def search_videos(self, query: str, limit: int | None = None, page: int | None = 1) -> tuple[list[dict[str, typing.Any]], int]:
-        query = "".join(c for c in query if c in SEARCH_VALID_TOKENS)
-        if not query.strip():
-            return [], 0
-
-        return await self._fetch(
-            table = "videos_fts f",
-            columns = VIDEO_W_CHANNEL_PARAMS,
-            filters = [("videos_fts", "MATCH", " ".join(f"{word}*" for word in query.split()))],
-            joins = ["JOIN videos_w_channel v ON v.rowid = f.rowid"],
-            order_by = "bm25(videos_fts)",
             limit = limit,
             page = page
         )
