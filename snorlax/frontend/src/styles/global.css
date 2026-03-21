@@ -147,11 +147,11 @@ button {
     div.dropdown {
         z-index: 2;
         background: #000;
-        top: calc(100% + 10px);
+        top: 100%;
+        margin-top: 10px;
         position: absolute;
         text-align: left;
         left: -12px;
-
         border: 1px solid #fff;
         padding: 10px;
     }
