@@ -3,13 +3,13 @@
 import tomllib
 from pathlib import Path
 
-from pydantic import BaseModel, DirectoryPath, FilePath
+from pydantic import BaseModel
 
 ROOT = Path(__file__).parent
 
 class SnorlaxConfig(BaseModel):
-    database_path: FilePath
-    video_path:    DirectoryPath
+    database_path: str
+    video_path:    str
 
 class VideoConfig(BaseModel):
     subtitle_languages: list[str]
