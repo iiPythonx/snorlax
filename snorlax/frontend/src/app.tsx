@@ -1,4 +1,8 @@
 import { Route, Switch } from "wouter";
+import { useState } from "preact/hooks";
+
+import { HeaderActionContext } from "./hooks/useHeaderActions";
+import type { HeaderAction } from "./types/header";
 
 import Home from "./pages/home.tsx";
 import Watch from "./pages/watch.tsx";
@@ -7,9 +11,6 @@ import Search from "./pages/search.tsx";
 import Channel from "./pages/channel.tsx";
 import Jobs from "./pages/jobs.tsx";
 import Settings from "./pages/settings.tsx";
-import { HeaderActionContext } from "./hooks/useHeaderActions";
-import type { HeaderAction } from "./types/header";
-import { useState } from "preact/hooks";
 import Header from "./components/header.tsx";
 
 export default function App() {
