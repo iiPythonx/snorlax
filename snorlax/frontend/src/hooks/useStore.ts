@@ -1,9 +1,11 @@
+import { useState } from "preact/hooks";
 import type { Store } from "../types/store";
 
 const DEFAULTS: Store = {
     settings: {
         languages: [],
         autoplay: false,
+        sponsorblock: true,
         storeProgress: false
     },
     videoProgress: {}
@@ -12,18 +14,23 @@ const DEFAULTS: Store = {
 let cache: Store | null = null;
 
 function deepMerge<T>(base: T, obj: Partial<T>): T {
-    const result = { ...base };
-    for (const key in base) {
-        const baseVal = base[key];
-        const objVal = obj[key];
+    const result: any = { ...base };
+    const keys = new Set([...Object.keys(base), ...Object.keys(obj || {})]);
 
-        if (typeof baseVal === "object" && baseVal !== null && !Array.isArray(baseVal)) result[key] = deepMerge(baseVal, objVal ?? {});
-        else result[key] = (objVal ?? baseVal) as T[typeof key];
+    for (const key of keys) {
+        const baseVal = base[key as keyof T];
+        const objVal = obj?.[key as keyof T];
+
+        if (baseVal && typeof baseVal === "object" && !Array.isArray(baseVal) &&
+            objVal && typeof objVal === "object" && !Array.isArray(objVal)) {
+            result[key] = deepMerge(baseVal, objVal);
+        } else result[key] = objVal !== undefined ? objVal : baseVal;
     }
-    return result;
+
+    return result as T;
 }
 
-export function loadStore(): Store {
+function loadStore(): Store {
     if (cache) return cache;
     try {
         const raw = localStorage.getItem("settings");
@@ -33,29 +40,22 @@ export function loadStore(): Store {
     return cache
 }
 
-let timeout: number | undefined;
-
-export function saveStore(): void {
+function saveStore(): void {
     if (!cache) return;
-
-    clearTimeout(timeout);
-    timeout = window.setTimeout(() => {
-        localStorage.setItem("settings", JSON.stringify(cache));
-    }, 300);
+    localStorage.setItem("settings", JSON.stringify(cache));
 }
 
-export function getStore(): Store {
-    return loadStore();
-}
-
-export function updateStore(mutator: (store: Store) => void): void {
+function updateStore(mutator: (store: Store) => void): void {
     const store = loadStore();
     mutator(store);
     saveStore();
 }
 
-export function patchStore(patch: Partial<Store>): void {
-    const store = loadStore();
-    cache = deepMerge(store, patch);
-    saveStore();
+export function useStore(): [Store, (mutator: (store: Store) => void) => void] {
+    const [state, setState] = useState<Store>(() => loadStore());
+    function update(mutator: (store: Store) => void) {
+        updateStore(mutator);
+        setState({ ...loadStore() });
+    }
+    return [state, update];
 }
