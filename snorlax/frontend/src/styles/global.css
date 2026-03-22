@@ -38,12 +38,7 @@ pre {
     }
 }
 
-/* Input styling (Search) */
-hr {
-    border: none;
-    border-bottom: 1px solid #535353;
-}
-
+/* Input styling */
 input {
     background: none;
     outline: none;
@@ -54,6 +49,12 @@ input {
 fieldset {
     padding: 10px;
     border: 1px solid #535353;
+}
+
+label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
 /* Link styling */
@@ -81,6 +82,11 @@ button {
 }
 
 /* Structuring */
+hr {
+    border: none;
+    border-bottom: 1px solid #535353;
+}
+
 .flex {
     gap: 10px;
     display: flex;

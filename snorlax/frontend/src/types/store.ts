@@ -1,6 +1,7 @@
 export interface Settings {
     languages: string[];
     autoplay: boolean;
+    sponsorblock: boolean;
     storeProgress: boolean;
 }
 

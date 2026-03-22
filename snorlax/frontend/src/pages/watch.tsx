@@ -1,8 +1,7 @@
-import { useEffect, useRef } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { Link, useLocation } from "wouter";
 
 import type Player from "video.js/dist/types/player";
-import type Component from "video.js/dist/types/component";
 
 import "video.js/dist/video-js.css";
 
@@ -13,6 +12,8 @@ import { useChannel } from "../hooks/useChannel";
 import type { Chapter } from "../types/api";
 import { useHeaderActions } from "../hooks/useHeaderActions";
 import { usePageTitle } from "../hooks/usePageTitle";
+import { useStore } from "../hooks/useStore";
+import type Component from "video.js/dist/types/component";
 
 type Caption = {
     src:     string;
@@ -26,7 +27,9 @@ const INTL = new Intl.DisplayNames("en-US", { type: "language" });
 
 function VideoPlayer({ src, poster, id, chapters, captions }: { src: string, poster: string, id: string, chapters: Chapter[], captions: Caption[] }) {
     const videoReference = useRef<HTMLVideoElement>(null);
-    const playerReference = useRef<Player>(null);
+    const videojsReference = useRef<typeof import("video.js").default>(null);
+    const [store, updateStore] = useStore();
+    const [player, setPlayer] = useState<Player | null>(null);
 
     useEffect(() => {
         if (!videoReference.current) return;
@@ -34,11 +37,11 @@ function VideoPlayer({ src, poster, id, chapters, captions }: { src: string, pos
         let cancelled = false;
         import("video.js").then(async (module) => {
             if (cancelled) return;
-            
+            videojsReference.current = module.default;
+
             await import("videojs-hotkeys");
-            
-            const videojs = module.default;
-            const player = playerReference.current = videojs(videoReference.current as HTMLVideoElement, {
+
+            setPlayer(videojsReference.current(videoReference.current as HTMLVideoElement, {
                 controls: true,
                 preload: "auto",
                 poster,
@@ -52,73 +55,117 @@ function VideoPlayer({ src, poster, id, chapters, captions }: { src: string, pos
                         documentHotkeysFocusElementFilter: (e: HTMLElement) => e.tagName.toLowerCase() === "body",
                         enableVolumeScroll: false
                     }
-                }
-            });
-
-            // Handle chapters
-            if (chapters.length) {
-                player.on("loadedmetadata", () => {
-                    const total = player.duration();
-                    const seekBar = player.getDescendant("controlBar", "progressControl", "seekBar");
-                    if (!total || !seekBar) return;
-
-                    for (const chapter of chapters) {
-                        const left = (chapter.start_time / total) * 100 + "%";
-                        seekBar.el().append(videojs.dom.createEl("div", undefined, {
-                            class: "vjs-marker",
-                            style: `left: ${left}`,
-                        }));
-                    }
-                });
-
-                const timeControl = player.getDescendant([
-                    "controlBar",
-                    "progressControl",
-                    "seekBar",
-                    "mouseTimeDisplay",
-                    "timeTooltip",
-                ]) as Component & { update: (rect: DOMRect, point: number, time: string) => void, write: (time: string) => void };
-                timeControl.update = function (_: DOMRect, point: number, time: string) {
-                    const currentTime = point * (player.duration() || 0);
-                    const currentChapter = chapters.findIndex(({ end_time }) => end_time >= currentTime);
-
-                    if (currentChapter > -1) {
-                        const { title } = chapters[currentChapter];
-
-                        videojs.dom.emptyEl(this.el());
-                        return videojs.dom.appendContent(this.el(), [
-                            videojs.dom.createEl("strong", undefined, undefined, title),
-                            videojs.dom.createEl("span", undefined, undefined, `(${time})`)
-                        ]);
-                    }
-
-                    this.write(time);
-                };
-            }
-
-            // Sponsorblock
-            const response = await fetch(`https://sponsor.ajay.app/api/skipSegments?videoID=${id}`);
-            if (response.status === 200) {
-                const segments: { segment: [number, number] }[] = await response.json();
-                player.on("timeupdate", () => {
-                    const time = player.currentTime() || 0;
-                    for (const seg of segments) {
-                        const [start, end] = seg.segment;
-                        if (time >= start && time < end) {
-                            player.currentTime(end);
-                            break;
-                        }
-                    }
-                });
-            };
+                },
+                autoplay: store.settings.autoplay
+            }));
         })
-
 
         return () => {
             cancelled = true;
-            if (playerReference.current) playerReference.current.dispose();
+            player?.dispose();
+            setPlayer(null);
         };
     }, [src, poster]);
+
+    // Time tracking
+    if (store.settings.storeProgress) {
+        useEffect(() => {
+            if (!player) return;
+            player.on("loadedmetadata", () => {
+                const duration = player.duration() || 0;
+
+                // Grab the current video time
+                // If we're at the end of a video (last 10 seconds), don't bother skipping
+                const existingTime = store.videoProgress[id] || 0;
+                if (existingTime < duration - 10) player.currentTime(existingTime);
+
+                setInterval(() => {
+                    const time = Math.round(player.currentTime() || 0);
+                    if (time !== store.videoProgress[id]) updateStore((store) => store.videoProgress[id] = time);
+                }, 1000);
+            });
+        }, [player]);
+    }
+
+    // Sponsorblock
+    if (store.settings.sponsorblock) {
+        useEffect(() => {
+            if (!player) return;
+
+            let segments: { segment: [number, number] }[] = [];
+            const fetchSegments = async () => {
+                const response = await fetch(`https://sponsor.ajay.app/api/skipSegments?videoID=${id}`);
+                if (response.status !== 200) return;
+
+                segments = await response.json();
+            };
+
+            fetchSegments();
+
+            const onTimeUpdate = () => {
+                const time = player.currentTime() || 0;
+                for (const seg of segments) {
+                    const [start, end] = seg.segment;
+                    if (time >= start && time < end) {
+                        player.currentTime(end);
+                        break;
+                    }
+                }
+            };
+
+            player.on("timeupdate", onTimeUpdate);
+            return () => player.off("timeupdate", onTimeUpdate);
+        }, [player, id]);
+    }
+
+    // Handle chapters
+    if (chapters.length) {
+        useEffect(() => {
+            if (!player) return;
+
+            player.on("loadedmetadata", () => {
+                if (!videojsReference.current) return;
+
+                const total = player.duration();
+                const seekBar = player.getDescendant("controlBar", "progressControl", "seekBar");
+                if (!total || !seekBar) return;
+    
+                for (const chapter of chapters) {
+                    const left = (chapter.start_time / total) * 100 + "%";
+                    seekBar.el().append(videojsReference.current.dom.createEl("div", undefined, {
+                        class: "vjs-marker",
+                        style: `left: ${left}`,
+                    }));
+                }
+            });
+    
+            const timeControl = player.getDescendant([
+                "controlBar",
+                "progressControl",
+                "seekBar",
+                "mouseTimeDisplay",
+                "timeTooltip",
+            ]) as Component & { update: (rect: DOMRect, point: number, time: string) => void, write: (time: string) => void };
+            timeControl.update = function (_: DOMRect, point: number, time: string) {
+                if (!videojsReference.current) return;
+
+                const currentTime = point * (player.duration() || 0);
+                const currentChapter = chapters.findIndex(({ end_time }) => end_time >= currentTime);
+    
+                if (currentChapter > -1) {
+                    const { title } = chapters[currentChapter];
+    
+                    videojsReference.current.dom.emptyEl(this.el());
+                    return videojsReference.current.dom.appendContent(this.el(), [
+                        videojsReference.current.dom.createEl("strong", undefined, undefined, title),
+                        videojsReference.current.dom.createEl("span", undefined, undefined, `(${time})`)
+                    ]);
+                }
+    
+                this.write(time);
+            };
+        }, [player])
+    }
 
     return (
         <div data-vjs-player>
@@ -132,6 +179,7 @@ export default function Watch({ id }: { id: string }) {
     const { channel, errored: channelError } = useChannel(video?.channel_id ?? "");
     const { setActions } = useHeaderActions();
     const [, navigate] = useLocation();
+    const [store,] = useStore();
 
     if (videoError || channelError) return <p>
         Snorlax failed to make an API request for this page.
@@ -165,9 +213,7 @@ export default function Watch({ id }: { id: string }) {
             const videoBaseUrl = `/v1/assets/${video.channel_id}/${video.id}`;
 
             // Handle captions
-            const selectedLanguages: string[] = JSON.parse(localStorage.getItem("langs") || "[]");
-            const selected =  selectedLanguages.find(lang => video?.caption_langs.includes(lang));
-
+            const selected = store.settings.languages.find(lang => video?.caption_langs.includes(lang));
             const captions = video?.caption_langs ? video?.caption_langs.map((code) => ({
                 kind: "captions",
                 src: `${videoBaseUrl}/sub.${code}.vtt`,

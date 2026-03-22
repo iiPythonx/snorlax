@@ -1,6 +1,8 @@
 import { useEffect, useState } from "preact/hooks";
 import type { TargetedInputEvent } from "preact";
 
+import { useStore } from "../hooks/useStore";
+
 const VALID_LANGUAGES = [
 
     // English
@@ -25,17 +27,12 @@ const VALID_LANGUAGES = [
 const INTL = new Intl.DisplayNames("en-US", { type: "language" });
 
 export default function Settings() {
-    const [selectedLanguages, setSelectedLanguages] = useState<string[]>(() => {
-        const stored = localStorage.getItem("langs");
-        return stored ? JSON.parse(stored) : [];
-    });
-
-    const [input, setInput] = useState<string>(() => {
-        return selectedLanguages.join(", ");
-    });
+    const [store, updateStore] = useStore();
+    const [selectedLanguages, setSelectedLanguages] = useState<string[]>(store.settings.languages);
+    const [input, setInput] = useState<string>(() => selectedLanguages.join(", "));
 
     useEffect(() => {
-        localStorage.setItem("langs", JSON.stringify(selectedLanguages));
+        updateStore(store => { store.settings.languages = selectedLanguages; })
     }, [selectedLanguages]);
 
     const handleLanguageUpdate = (e: TargetedInputEvent<HTMLInputElement>) => {
@@ -55,10 +52,38 @@ export default function Settings() {
             <input type = "text" onChange={handleLanguageUpdate} placeholder = "en-US, en-GB, en" value = {input} />
             <span>Preview: {selectedLanguages.map((lang) => INTL.of(lang)).join(", ") || "none selected"}</span>
         </fieldset>
-        <fieldset>
+        <fieldset className = "flex column">
             <legend>General Options</legend>
-            <label for = "video-progress">Save video progress</label>
-            <input id = "video-progress" type = "checkbox" />
+            <label>
+                <input
+                    type = "checkbox"
+                    checked = {store.settings.storeProgress}
+                    onChange = {(e) => {
+                        updateStore(store => { store.settings.storeProgress = e.currentTarget.checked; })
+                    }}
+                />
+                <span>Save video progress</span>
+            </label>
+            <label>
+                <input
+                    type = "checkbox"
+                    checked = {store.settings.autoplay}
+                    onChange = {(e) => {
+                        updateStore(store => { store.settings.autoplay = e.currentTarget.checked; })
+                    }}
+                />
+                <span>Auto play videos</span>
+            </label>
+            <label>
+                <input
+                    type = "checkbox"
+                    checked = {store.settings.sponsorblock}
+                    onChange = {(e) => {
+                        updateStore(store => { store.settings.sponsorblock = e.currentTarget.checked; })
+                    }}
+                />
+                <span>Enable sponsorblock</span>
+            </label>
         </fieldset>
     </>;
 }
