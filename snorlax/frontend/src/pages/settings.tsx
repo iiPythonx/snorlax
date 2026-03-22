@@ -55,5 +55,10 @@ export default function Settings() {
             <input type = "text" onChange={handleLanguageUpdate} placeholder = "en-US, en-GB, en" value = {input} />
             <span>Preview: {selectedLanguages.map((lang) => INTL.of(lang)).join(", ") || "none selected"}</span>
         </fieldset>
+        <fieldset>
+            <legend>General Options</legend>
+            <label for = "video-progress">Save video progress</label>
+            <input id = "video-progress" type = "checkbox" />
+        </fieldset>
     </>;
 }
