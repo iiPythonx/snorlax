@@ -13,7 +13,7 @@ const DEFAULTS: Store = {
 
 let cache: Store | null = null;
 
-function deepMerge<T>(base: T, obj: Partial<T>): T {
+function deepMerge<T extends object>(base: T, obj: Partial<T>): T {
     const result: any = { ...base };
     const keys = new Set([...Object.keys(base), ...Object.keys(obj || {})]);
 
