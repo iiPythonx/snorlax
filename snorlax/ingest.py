@@ -30,7 +30,7 @@ class Job:
             "quiet": True,
             "noprogress": True,
             "js_runtimes": {"bun": {}}
-        })  # type: ignore
+        })  # pyright: ignore[reportArgumentType]
 
         self._progress: dict[str, typing.Any] = {
             "progress": 0,
@@ -98,7 +98,7 @@ class Job:
             await db.add_channel(self.info["channel_id"], self.info.get("uploader_id"), self.info["uploader"], self.info["channel_follower_count"])
 
         self.info |= {"caption_langs": list((self.info["requested_subtitles"] or {}).keys()), "chapters": self.info["chapters"] or []}
-        await db.add_video(**{k: v for k, v in self.info.items() if k in VIDEO_PARAMS})  # type: ignore
+        await db.add_video(**{k: v for k, v in self.info.items() if k in VIDEO_PARAMS})
 
         # Reorganize everything
         video_path = config.snorlax.video_path / self.info["channel_id"] / self.info["id"]
@@ -137,7 +137,7 @@ class Snorlax:
 
         # Handle extraction
         try:
-            info: dict[str, typing.Any] = await asyncio.to_thread(self.ytdl.extract_info, url, download = False)  # type: ignore
+            info: dict[str, typing.Any] = await asyncio.to_thread(self.ytdl.extract_info, url, download = False)  # pyright: ignore[reportAssignmentType]
             if (media_type := info.get("_type", info.get("media_type"))) not in {"playlist", "video"}:
                 raise ValueError(f"Received an unsupported media type: {media_type}")
 
