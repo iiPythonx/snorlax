@@ -10,6 +10,7 @@ from snorlax.config import ROOT, config
 
 VIDEO_PARAMS           = ("id", "title", "description", "view_count", "like_count", "duration_string", "timestamp", "channel_id", "caption_langs", "chapters")
 VIDEO_W_CHANNEL_PARAMS = VIDEO_PARAMS + ("channel_name", "channel_preferred_id")
+VIDEO_W_JOB_PARAMS     = VIDEO_W_CHANNEL_PARAMS + ("job_id", "status", "progress", "speed", "eta", "error")
 CHANNEL_PARAMS         = ("id", "handle", "name", "subscribers", "preferred_id")
 JSON_COLUMNS           = ("caption_langs", "chapters")
 
@@ -166,16 +167,17 @@ class Database:
             return await self._fetch(
                 table = "videos_fts f",
                 columns = VIDEO_W_CHANNEL_PARAMS,
-                filters = [("videos_fts", "MATCH", " ".join(f"{word}*" for word in query.split()))],
+                filters = [("available", "=", "1"), ("videos_fts", "MATCH", " ".join(f"{word}*" for word in query.split()))],
                 joins = ["JOIN videos_w_channel v ON v.rowid = f.rowid"],
                 order_by = "bm25(videos_fts)",
                 limit = limit,
                 page = page
             )
+
         return await self._fetch(
             table = "videos_w_channel",
             columns = VIDEO_W_CHANNEL_PARAMS,
-            filters = [("channel_id", "=", channel_id)] if channel_id is not None else [],
+            filters = [("available", "=", "1")] + ([("channel_id", "=", channel_id)] if channel_id is not None else []),
             order_by = "timestamp DESC",
             limit = limit,
             page = page
@@ -183,6 +185,35 @@ class Database:
 
     async def delete_video(self, video_id: str) -> None:
         await self.db.execute("DELETE FROM videos WHERE id = ?", (video_id,))
+        await self.db.commit()
+
+    # Jobs
+    async def add_job(self, job_id: str, video_id: str, url: str) -> None:
+        await self.db.execute("INSERT INTO jobs (id, video_id, url) VALUES (?, ?, ?)", (job_id, video_id, url))
+        await self.db.commit()
+
+    async def update_job(self, job_id: str, **kwargs) -> None:
+        await self.db.execute(f"UPDATE jobs SET {', '.join(f'{k} = ?' for k in kwargs)} WHERE id = ?", tuple(kwargs.values()) + (job_id,))
+        if kwargs.get("status") == "finished":
+            await self.db.execute("UPDATE videos SET available = 1 WHERE id = (SELECT video_id FROM jobs WHERE id = ?)", (job_id,))
+
+        await self.db.commit()
+
+    async def get_jobs(self, limit: int | None = None, page: int | None = 1) -> tuple[list[dict], int]:
+        return await self._fetch(
+            table = "videos_w_job",
+            columns = VIDEO_W_JOB_PARAMS,
+            order_by = "created_at DESC",
+            limit = limit,
+            page = page
+        )
+
+    async def get_queued_jobs(self) -> list[tuple[str, str, str]]:
+        async with self.db.execute_fetchall("SELECT id, video_id, url FROM jobs WHERE status = 'queued' ORDER BY created_at") as result:
+            return [tuple(job) for job in result]
+
+    async def delete_job(self, job_id: str) -> None:
+        await self.db.execute("DELETE FROM jobs WHERE id = ?", (job_id,))
         await self.db.commit()
 
 db = Database()

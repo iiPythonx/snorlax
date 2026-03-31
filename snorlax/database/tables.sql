@@ -36,12 +36,13 @@ JOIN channels c ON v.channel_id = c.id;
 CREATE TABLE IF NOT EXISTS jobs (
     id         TEXT PRIMARY KEY,
     video_id   TEXT NOT NULL,
-    status     TEXT,
+    url        TEXT NOT NULL,
+    status     TEXT DEFAULT "queued",
     progress   INTEGER,
     speed      REAL,
     eta        INTEGER,
     error      TEXT,
-    created_at INTEGER
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(video_id) REFERENCES videos(id) ON DELETE CASCADE
 );
 
@@ -51,14 +52,18 @@ SELECT
     v.rowid AS rowid,
     c.name AS channel_name,
     c.preferred_id AS channel_preferred_id,
+    j.id AS job_id,
     j.status,
     j.progress,
     j.speed,
     j.eta,
-    j.error
+    j.error,
+    j.created_at
 FROM videos v
 JOIN channels c ON v.channel_id = c.id
-LEFT JOIN jobs j ON j.video_id = v.id;
+JOIN jobs j ON j.video_id = v.id;
+
+UPDATE jobs SET status = 'queued' WHERE status IN ('downloading', 'remuxing');
 
 -- Full text search
 CREATE VIRTUAL TABLE IF NOT EXISTS videos_fts USING fts5(
