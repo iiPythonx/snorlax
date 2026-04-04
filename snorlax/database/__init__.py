@@ -71,7 +71,7 @@ class Database:
         columns: tuple[str, ...],
         filters: list[tuple[str, str, typing.Any]] | None = None,
         joins: list[str] | None = None,
-        order_by: str | None = None,
+        order: str | None = None,
         limit: int | None = None,
         page: int | None = 1
     ) -> tuple[list[dict], int]:
@@ -100,8 +100,8 @@ class Database:
             raise RuntimeError("SQL returned no count data!")
 
         # Handle ordering, limiting, pagination
-        if order_by:
-            query += f" ORDER BY {order_by}"
+        if order:
+            query += f" ORDER BY {order}"
 
         if limit is not None:
             query += " LIMIT ?"
@@ -129,7 +129,7 @@ class Database:
         return await self._fetch(
             table = "channels",
             columns = CHANNEL_PARAMS,
-            order_by = "name ASC",
+            order = "name ASC",
             limit = limit,
             page = page
         )
@@ -159,29 +159,23 @@ class Database:
         limit: int | None = None,
         page: int | None = 1
     ) -> tuple[list[dict], int]:
+        kwargs = {"table": "videos_w_channel", "filters": [("available", "=", "1")], "joins": [], "order": "timestamp DESC"}
+        if channel_id is not None:
+            kwargs["filters"].append(("channel_id", "=", channel_id))
+
         if query is not None:
             query = "".join(c for c in query if c in SEARCH_VALID_TOKENS)
             if not query.strip():
                 return [], 0
+            
+            kwargs |= {
+                "table": "videos_fts f",
+                "joins": ["JOIN videos_w_channel v ON v.rowid = f.rowid"],
+                "order": "bm25(videos_fts)"
+            }
+            kwargs["filters"].append(("videos_fts", "MATCH", " ".join(f"{word}*" for word in query.split())))
 
-            return await self._fetch(
-                table = "videos_fts f",
-                columns = VIDEO_W_CHANNEL_PARAMS,
-                filters = [("available", "=", "1"), ("videos_fts", "MATCH", " ".join(f"{word}*" for word in query.split()))],
-                joins = ["JOIN videos_w_channel v ON v.rowid = f.rowid"],
-                order_by = "bm25(videos_fts)",
-                limit = limit,
-                page = page
-            )
-
-        return await self._fetch(
-            table = "videos_w_channel",
-            columns = VIDEO_W_CHANNEL_PARAMS,
-            filters = [("available", "=", "1")] + ([("channel_id", "=", channel_id)] if channel_id is not None else []),
-            order_by = "timestamp DESC",
-            limit = limit,
-            page = page
-        )
+        return await self._fetch(columns = VIDEO_W_CHANNEL_PARAMS, limit = limit, page = page, **kwargs)
 
     async def delete_video(self, video_id: str) -> None:
         await self.db.execute("DELETE FROM videos WHERE id = ?", (video_id,))
@@ -203,7 +197,7 @@ class Database:
         return await self._fetch(
             table = "videos_w_job",
             columns = VIDEO_W_JOB_PARAMS,
-            order_by = "created_at DESC",
+            order = "created_at DESC",
             limit = limit,
             page = page
         )
