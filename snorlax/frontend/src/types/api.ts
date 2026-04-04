@@ -26,3 +26,11 @@ export type Channel = {
     subscribers:  number;
     preferred_id: string;
 };
+
+export type Job = Video & {
+    status:   "finished" | "downloading" | "remuxing" | "errored";
+    progress: number;
+    speed:    number | null;
+    eta:      number | null;
+    error:    string | null
+}

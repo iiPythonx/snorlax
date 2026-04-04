@@ -2,19 +2,55 @@ import { useEffect, useState } from "preact/hooks";
 import { Link } from "wouter";
 
 import { humanizeTime } from "../lib/time";
-import type { Video, Channel } from "../types/api";
+import type { Video, Channel, Job } from "../types/api";
 
 type PaginatorProps = {
-    type: "video" | "channel";
+    type: "video" | "channel" | "job";
     endpoint: string;
     limit?: number;
     params?: Record<string, string>;
 };
 
+function VideoItem({ item }: { item: Video }) {
+    const video = item as Video;
+    const videoBaseUrl = `/v1/assets/${video.channel_id}/${video.id}`;
+    return (
+        <article key = {video.id}>
+            <Link href = {`/watch/${video.id}`} className = "video-poster flex column">
+                <img src = {`${videoBaseUrl}/cover.webp`} />
+                <span className = "duration-string">{video.duration_string}</span>
+                <span>{video.title}</span>
+            </Link>
+            <div>
+                <Link href = {`/channel/${video.channel_preferred_id}`} className = "silent">{video.channel_name}</Link>
+                {" "}
+                <br />
+                <span>
+                {video.view_count.toLocaleString()} views • {humanizeTime(video.timestamp)}
+                </span>
+            </div>
+        </article>
+    );
+}
+
+function ChannelItem({ item }: { item: Channel }) {
+    const channel = item as Channel;
+    return (
+        <article key = {channel.id}>
+            <Link href = {`/channel/${channel.preferred_id}`}>{channel.name}</Link>
+        </article>
+    );
+}
+
+function JobItem({ item }: { item: Job }) {
+    console.log(item.id);
+    return <p>this is supposed to be a job</p>;
+}
+
 export default function Paginator({ type, endpoint, limit = 8, params }: PaginatorProps) {
     const [page, setPage] = useState(1);
     const [total, setTotal] = useState(1);
-    const [items, setItems] = useState<(Video | Channel)[]>([]);
+    const [items, setItems] = useState<(Video | Channel | Job)[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadTime, setLoadTime] = useState<number | null>(null);
 
@@ -41,34 +77,16 @@ export default function Paginator({ type, endpoint, limit = 8, params }: Paginat
         <div className = "flex column">
             <div className = "flex item-list">
                 {!loading && items.length === 0 && <span>No results returned from API.</span>}
-                {!loading && items.map((item: any) => {
-                    if (type === "video") {
-                        const video = item as Video;
-                        const videoBaseUrl = `/v1/assets/${video.channel_id}/${video.id}`;
-                        return (
-                            <article key = {video.id}>
-                                <Link href = {`/watch/${video.id}`} className = "video-poster flex column">
-                                    <img src = {`${videoBaseUrl}/cover.webp`} />
-                                    <span className = "duration-string">{video.duration_string}</span>
-                                    <span>{video.title}</span>
-                                </Link>
-                                <div>
-                                    <Link href = {`/channel/${video.channel_preferred_id}`} className = "silent">{video.channel_name}</Link>
-                                    {" "}
-                                    <br />
-                                    <span>
-                                    {video.view_count.toLocaleString()} views • {humanizeTime(video.timestamp)}
-                                    </span>
-                                </div>
-                            </article>
-                        );
-                    } else {
-                        const channel = item as Channel;
-                        return (
-                            <article key = {channel.id}>
-                                <Link href = {`/channel/${channel.preferred_id}`}>{channel.name}</Link>
-                            </article>
-                        );
+                {!loading && items.map((item) => {
+                    switch (type) {
+                        case "video":
+                            return <VideoItem key = {item.id} item = {item as Video} />
+
+                        case "channel":
+                            return <ChannelItem key = {item.id} item = {item as Channel} />
+
+                        case "job":
+                            return <JobItem key = {item.id} item = {item as Job} />
                     }
                 })}
             </div>

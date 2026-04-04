@@ -1,6 +1,4 @@
-import { useEffect, useRef, useState } from "preact/hooks";
-import { Link } from "wouter";
-import { humanizeTime } from "../lib/time";
+import Paginator from "../components/paginator";
 
 type Job = {
     title:                string;
@@ -16,35 +14,20 @@ type Job = {
 type JobMap = Record<string, Job>
 
 export default function Jobs() {
-    const [jobs, setJobs] = useState<JobMap>({});
-    const socketReference = useRef<WebSocket | null>(null);
-
-    // Connect to websocket
-    useEffect(() => {
-        const ws = new WebSocket(`${window.location.port === '5173' ? 'http://localhost:8000' : ''}/v1/jobs`);
-        ws.addEventListener("message", (e) => setJobs(JSON.parse(e.data) as JobMap));
-        
-        socketReference.current = ws;
-
-        return () => ws.close();
-    }, []);
 
     // Handle adding job
-    const addJob = () => {
+    const addJob = async () => {
         const url = prompt("Target URL (video/channel url)");
-        if (!url) return;
-
-        // Send off job
-        socketReference.current?.send(JSON.stringify({ type: "add-job", url }));
+        if (url) await fetch(`/v1/jobs/create`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url })
+        });
     }
 
     // Handle canceling job
     const cancelJob = (id: string) => {
-        socketReference.current?.send(JSON.stringify({ type: "cancel-job", id }));
-        setJobs((prev) => {
-            const { [id]: _, ...rest } = prev;
-            return rest;
-        });
+        console.log("delete job", id);
     }
 
     return <>
@@ -57,29 +40,7 @@ export default function Jobs() {
         <hr />
         <section>
             <div className = "flex column" id = "job-list">
-                {Object.entries(jobs).filter(([_, job]) => job.status).map(([id, job]) => {
-                    const finished = ["finished", "failed"].includes(job.status);
-
-                    // Progress calculation
-                    const completed_amount = Math.round(20 * (job.progress / 100));
-                    const progress_spacing = 20 - completed_amount;
-
-                    return (
-                        <article>
-                            <div className = "flex">
-                                <Link href = {`/watch/${id}`}>{job.title || id}</Link>
-                                <button className = "pad-left" onClick = {() => cancelJob(id)}>{finished ? "Remove" : "Cancel"} Job</button>
-                            </div>
-                            <div className = "flex">
-                                <Link href = {`/channel/${job.channel_preferred_id}`}>{job.channel || 'N/A'}</Link> •
-                                {" "}{job.timestamp ? humanizeTime(job.timestamp) : 'N/A'} • {job.status} {job.status === "downloading" && `• ${job.speed} MiB/s • ETA ${job.eta}s`}
-                                <pre className = "pad-left">[{"=".repeat(completed_amount)}{" ".repeat(progress_spacing)}] <span style = {{ width: "30px", display: "inline-block", textAlign: "right" }}>{job.progress}%</span></pre>
-                            </div>
-                            <br />
-                            <hr />
-                        </article>
-                    )
-                })}
+                <Paginator type = "job" endpoint = "jobs" />
             </div>
         </section>
     </>;
