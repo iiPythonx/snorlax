@@ -22,9 +22,11 @@ export default function Jobs() {
 
     return <>
         <section className = "flex column">
-            <div className = "flex">
+            <div className = "flex" style = {{ alignItems: "center" }}>
                 <h2>Current Jobs</h2>
-                <button className = "pad-left" onClick = {addJob}>Add Job</button>
+                <button className = "pad-left" onClick = {() => viewRef.current?.refresh()}>Refresh</button>
+                {"|"}
+                <button onClick = {addJob}>Add Job</button>
             </div>
         </section>
         <hr />

@@ -75,7 +75,6 @@ const View = forwardRef<ViewHandle, ViewProps>(({
     const [loadTime, setLoadTime] = useState<number | null>(null);
 
     async function fetchPage() {
-        console.log("page fetched");
         const start = Date.now();
         setLoading(true);
 
@@ -85,7 +84,7 @@ const View = forwardRef<ViewHandle, ViewProps>(({
 
             const data = (await response.json()).data;
             setItems(data.items);
-            setTotal(Math.ceil(data.total / limit));
+            setTotal(Math.ceil(data.total / limit) || 1);
             setLoadTime(Date.now() - start);
         } catch (err: any) { setItems([]); setTotal(1); } finally { setLoading(false); }
     }
@@ -119,7 +118,7 @@ const View = forwardRef<ViewHandle, ViewProps>(({
                 {loadTime !== null && <span className = "api-time">[ {loadTime}ms ]</span>}
                 <div>
                     <button onClick = {() => page > 1 && setPage(page - 1)} disabled = {page === 1}>&lt; Back</button>
-                    <span> | Page {page} / {total || 1} | </span>
+                    <span> | Page {page} / {total} | </span>
                     <button onClick = {() => page < total && setPage(page + 1)} disabled = {page === total}>Next &gt;</button>
                 </div>
             </article>
