@@ -4,6 +4,8 @@ import { Link, useLocation } from "wouter";
 import type Player from "video.js/dist/types/player";
 
 import "video.js/dist/video-js.css";
+import videojs from "video.js";
+import "videojs-hotkeys";
 
 import { humanizeTime } from "../lib/time";
 
@@ -27,42 +29,37 @@ const INTL = new Intl.DisplayNames("en-US", { type: "language" });
 
 function VideoPlayer({ src, poster, id, chapters, captions }: { src: string, poster: string, id: string, chapters: Chapter[], captions: Caption[] }) {
     const videoReference = useRef<HTMLVideoElement>(null);
-    const videojsReference = useRef<typeof import("video.js").default>(null);
+    const playerReference = useRef<Player | null>(null);
     const [store, updateStore] = useStore();
     const [player, setPlayer] = useState<Player | null>(null);
 
     useEffect(() => {
         if (!videoReference.current) return;
 
-        let cancelled = false;
-        import("video.js").then(async (module) => {
-            if (cancelled) return;
-            videojsReference.current = module.default;
+        const videoInstance = videojs(videoReference.current as HTMLVideoElement, {
+            controls: true,
+            preload: "auto",
+            poster,
+            sources: [{ src, type: "video/matroska" }],
+            tracks: captions,
+            plugins: {
+                hotkeys: {
+                    enableModifiersForNumbers: false,
+                    alwaysCaptureHotkeys: true,
+                    captureDocumentHotkeys: true,
+                    documentHotkeysFocusElementFilter: (e: HTMLElement) => e.tagName.toLowerCase() === "body",
+                    enableVolumeScroll: false
+                }
+            },
+            autoplay: store.settings.autoplay
+        });
 
-            await import("videojs-hotkeys");
-
-            setPlayer(videojsReference.current(videoReference.current as HTMLVideoElement, {
-                controls: true,
-                preload: "auto",
-                poster,
-                sources: [{ src, type: "video/matroska" }],
-                tracks: captions,
-                plugins: {
-                    hotkeys: {
-                        enableModifiersForNumbers: false,
-                        alwaysCaptureHotkeys: true,
-                        captureDocumentHotkeys: true,
-                        documentHotkeysFocusElementFilter: (e: HTMLElement) => e.tagName.toLowerCase() === "body",
-                        enableVolumeScroll: false
-                    }
-                },
-                autoplay: store.settings.autoplay
-            }));
-        })
+        playerReference.current = videoInstance;
+        setPlayer(videoInstance);
 
         return () => {
-            cancelled = true;
-            player?.dispose();
+            playerReference.current?.dispose();
+            playerReference.current = null;
             setPlayer(null);
         };
     }, [src, poster]);
@@ -124,15 +121,13 @@ function VideoPlayer({ src, poster, id, chapters, captions }: { src: string, pos
             if (!player) return;
 
             player.on("loadedmetadata", () => {
-                if (!videojsReference.current) return;
-
                 const total = player.duration();
                 const seekBar = player.getDescendant("controlBar", "progressControl", "seekBar");
                 if (!total || !seekBar) return;
     
                 for (const chapter of chapters) {
                     const left = (chapter.start_time / total) * 100 + "%";
-                    seekBar.el().append(videojsReference.current.dom.createEl("div", undefined, {
+                    seekBar.el().append(videojs.dom.createEl("div", undefined, {
                         class: "vjs-marker",
                         style: `left: ${left}`,
                     }));
@@ -147,18 +142,16 @@ function VideoPlayer({ src, poster, id, chapters, captions }: { src: string, pos
                 "timeTooltip",
             ]) as Component & { update: (rect: DOMRect, point: number, time: string) => void, write: (time: string) => void };
             timeControl.update = function (_: DOMRect, point: number, time: string) {
-                if (!videojsReference.current) return;
-
                 const currentTime = point * (player.duration() || 0);
                 const currentChapter = chapters.findIndex(({ end_time }) => end_time >= currentTime);
     
                 if (currentChapter > -1) {
                     const { title } = chapters[currentChapter];
     
-                    videojsReference.current.dom.emptyEl(this.el());
-                    return videojsReference.current.dom.appendContent(this.el(), [
-                        videojsReference.current.dom.createEl("strong", undefined, undefined, title),
-                        videojsReference.current.dom.createEl("span", undefined, undefined, `(${time})`)
+                    videojs.dom.emptyEl(this.el());
+                    return videojs.dom.appendContent(this.el(), [
+                        videojs.dom.createEl("strong", undefined, undefined, title),
+                        videojs.dom.createEl("span", undefined, undefined, `(${time})`)
                     ]);
                 }
     
