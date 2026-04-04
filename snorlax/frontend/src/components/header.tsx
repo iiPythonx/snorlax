@@ -21,6 +21,7 @@ export default function Header() {
                     <div className = "dropdown flex column">
                         <Link href = "/jobs">Jobs</Link>
                         <Link href = "/settings">Settings</Link>
+                        <Link href = "/about">About</Link>
                         {actions.length > 0 && (
                             <>
                                 <hr />

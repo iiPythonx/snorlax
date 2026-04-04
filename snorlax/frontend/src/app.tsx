@@ -5,13 +5,15 @@ import { lazy, Suspense } from "preact/compat";
 import { HeaderActionContext } from "./hooks/useHeaderActions";
 import type { HeaderAction } from "./types/header";
 
+import Header from "./components/header.tsx";
+
 import Home from "./pages/home.tsx";
-import NotFound from "./pages/404.tsx";
 import Search from "./pages/search.tsx";
 import Channel from "./pages/channel.tsx";
 import Jobs from "./pages/jobs.tsx";
 import Settings from "./pages/settings.tsx";
-import Header from "./components/header.tsx";
+import About from "./pages/about.tsx";
+import NotFound from "./pages/404.tsx";
 
 const Watch = lazy(() => import("./pages/watch.tsx"));
 
@@ -31,6 +33,7 @@ export default function App() {
                 </Route>
                 <Route path = "/jobs" component = {Jobs} />
                 <Route path = "/settings" component = {Settings} />
+                <Route path = "/about" component = {About} />
                 <Route component = {NotFound} />
             </Switch>
         </HeaderActionContext.Provider>
