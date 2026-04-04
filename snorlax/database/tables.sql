@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS videos (
     description     TEXT,
     view_count      INTEGER,
     like_count      INTEGER,
-    duration_string TEXT,
+    duration        INTEGER,
     timestamp       INTEGER,
     channel_id      TEXT,
     caption_langs   TEXT,  -- JSON

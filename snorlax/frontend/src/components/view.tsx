@@ -1,7 +1,7 @@
 import { useEffect, useImperativeHandle, useState } from "preact/hooks";
 import { Link } from "wouter";
 
-import { humanizeTime } from "../lib/time";
+import { createDurationString, humanizeTime } from "../lib/time";
 import type { Video, Channel, Job } from "../types/api";
 import { forwardRef } from "preact/compat";
 
@@ -24,7 +24,7 @@ function VideoItem({ item }: { item: Video }) {
     return <>
         <Link href = {`/watch/${video.id}`} className = "video-poster flex column">
             <img src = {`${videoBaseUrl}/cover.webp`} />
-            <span className = "duration-string">{video.duration_string}</span>
+            <span className = "duration-string">{createDurationString(video.duration)}</span>
             <span>{video.title}</span>
         </Link>
         <div>

@@ -7,7 +7,7 @@ import "video.js/dist/video-js.css";
 import videojs from "video.js";
 import "videojs-hotkeys";
 
-import { humanizeTime } from "../lib/time";
+import { createDurationString, humanizeTime } from "../lib/time";
 
 import { useVideo } from "../hooks/useVideo";
 import { useChannel } from "../hooks/useChannel";
@@ -221,7 +221,7 @@ export default function Watch({ id }: { id: string }) {
                 <hr />
                 <span>
                     <Link href = {`/channel/${channel.preferred_id}`}>{channel.name}</Link> ({channel.subscribers.toLocaleString()} subscribers) <br />
-                    {video.duration_string} • {video.view_count.toLocaleString()} views • {video.like_count.toLocaleString()} likes • {date_string} ({humanizeTime(video.timestamp)})
+                    {createDurationString(video.duration)} • {video.view_count.toLocaleString()} views • {video.like_count.toLocaleString()} likes • {date_string} ({humanizeTime(video.timestamp)})
                 </span>
                 <hr />
                 <pre style = "margin-bottom: 20px;" dangerouslySetInnerHTML = {{ __html: description }}></pre>

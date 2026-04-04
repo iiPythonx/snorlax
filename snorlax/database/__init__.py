@@ -8,7 +8,7 @@ import aiosqlite
 
 from snorlax.config import ROOT, config
 
-VIDEO_PARAMS           = ("id", "title", "description", "view_count", "like_count", "duration_string", "timestamp", "channel_id", "caption_langs", "chapters")
+VIDEO_PARAMS           = ("id", "title", "description", "view_count", "like_count", "duration", "timestamp", "channel_id", "caption_langs", "chapters")
 VIDEO_W_CHANNEL_PARAMS = VIDEO_PARAMS + ("channel_name", "channel_preferred_id")
 VIDEO_W_JOB_PARAMS     = VIDEO_W_CHANNEL_PARAMS + ("job_id", "status", "progress", "speed", "eta", "error")
 CHANNEL_PARAMS         = ("id", "handle", "name", "subscribers", "preferred_id")

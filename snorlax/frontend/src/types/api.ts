@@ -10,7 +10,7 @@ export type Video = {
     description:          string;
     view_count:           number;
     like_count:           number;
-    duration_string:      string;
+    duration:             number;
     timestamp:            number;
     channel_id:           string;
     caption_langs:        string[];

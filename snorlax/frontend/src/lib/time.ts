@@ -19,3 +19,8 @@ export function humanizeTime(timestamp: number): string {
 
     return "forever ago";
 }
+
+export function createDurationString(seconds: number): string {
+    const string = new Date(seconds * 1000).toISOString()
+    return string.slice(seconds >= 3600 ? 11 : 14, 19);
+}
