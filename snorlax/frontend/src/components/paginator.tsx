@@ -1,15 +1,22 @@
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useImperativeHandle, useState } from "preact/hooks";
 import { Link } from "wouter";
 
 import { humanizeTime } from "../lib/time";
 import type { Video, Channel, Job } from "../types/api";
+import { forwardRef } from "preact/compat";
 
 type PaginatorProps = {
-    type: "video" | "channel" | "job";
-    endpoint: string;
-    limit?: number;
-    params?: Record<string, string>;
+    type:         "video" | "channel" | "job";
+    endpoint:     string;
+    limit?:       number;
+    params?:      Record<string, string>;
+    refreshTime?: number;
+    onJobCancel?: (job: Job) => void;
 };
+
+export type PaginatorHandle = {
+    refresh: () => void;
+}
 
 function VideoItem({ item }: { item: Video }) {
     const video = item as Video;
@@ -38,12 +45,29 @@ function ChannelItem({ item }: { item: Channel }) {
     );
 }
 
-function JobItem({ item }: { item: Job }) {
-    console.log(item.id);
-    return <p>this is supposed to be a job</p>;
+function JobItem({ item, onJobCancel }: { item: Job, onJobCancel?: (job: Job) => void }) {
+    const finished = ["finished", "failed"].includes(item.status);
+    const completed_amount = Math.round(20 * (item.progress / 100));
+    const progress_spacing = 20 - completed_amount;
+
+    return <>
+        <div className = "flex">
+            <Link href = {`/watch/${item.id}`}>{item.title}</Link>
+            <button className = "pad-left" onClick = {() => onJobCancel && onJobCancel(item)}>{finished ? "Remove" : "Cancel"} Job</button>
+        </div>
+        <div className = "flex">
+            <Link href = {`/channel/${item.channel_preferred_id}`}>{item.channel_name}</Link> •
+            {" "}{humanizeTime(item.timestamp)} • {item.status} {item.status === "downloading" && `• ${item.speed} MiB/s • ETA ${item.eta}s`}
+            <pre className = "pad-left">[{"=".repeat(completed_amount)}{" ".repeat(progress_spacing)}] <span style = {{ width: "30px", display: "inline-block", textAlign: "right" }}>{item.progress}%</span></pre>
+        </div>
+        <br />
+        <hr />
+    </>
 }
 
-export default function Paginator({ type, endpoint, limit = 8, params }: PaginatorProps) {
+const Paginator = forwardRef<PaginatorHandle, PaginatorProps>(({
+    type, endpoint, limit = 8, params, refreshTime, onJobCancel
+}, ref) => {
     const [page, setPage] = useState(1);
     const [total, setTotal] = useState(1);
     const [items, setItems] = useState<(Video | Channel | Job)[]>([]);
@@ -51,6 +75,7 @@ export default function Paginator({ type, endpoint, limit = 8, params }: Paginat
     const [loadTime, setLoadTime] = useState<number | null>(null);
 
     async function fetchPage() {
+        console.log("page fetched");
         const start = Date.now();
         setLoading(true);
 
@@ -67,17 +92,25 @@ export default function Paginator({ type, endpoint, limit = 8, params }: Paginat
 
     useEffect(() => {
         fetchPage();
-    }, [page, params]);
+        if (refreshTime) {
+            const interval = setInterval(() => fetchPage(), refreshTime * 1000);
+            return () => clearInterval(interval);
+        }
+    }, [refreshTime, page, params]);
+
+    useImperativeHandle(ref, () => ({
+        refresh: fetchPage
+    }));
 
     return (
         <div className = "flex column">
             <div className = "flex item-list">
                 {!loading && items.length === 0 && <span>No results returned from API.</span>}
-                {!loading && items.map((item) => <article key = {item.id}>
+                {!loading && items.map((item) => <article key = {item.id} className = {`item-${type}`}>
                     {
-                        type === "video" ? <VideoItem key = {item.id} item = {item as Video} /> :
-                        type === "channel" ? <ChannelItem key = {item.id} item = {item as Channel} /> :
-                        type === "job" ? <JobItem key = {item.id} item = {item as Job} /> :
+                        type === "video" ? <VideoItem item = {item as Video} /> :
+                        type === "channel" ? <ChannelItem item = {item as Channel} /> :
+                        type === "job" ? <JobItem item = {item as Job} onJobCancel = {onJobCancel} /> :
                         null
                     }
                 </article>)}
@@ -86,10 +119,12 @@ export default function Paginator({ type, endpoint, limit = 8, params }: Paginat
                 {loadTime !== null && <span className = "api-time">[ {loadTime}ms ]</span>}
                 <div>
                     <button onClick = {() => page > 1 && setPage(page - 1)} disabled = {page === 1}>&lt; Back</button>
-                    <span> | Page {page} / {total} | </span>
+                    <span> | Page {page} / {total || 1} | </span>
                     <button onClick = {() => page < total && setPage(page + 1)} disabled = {page === total}>Next &gt;</button>
                 </div>
             </article>
         </div>
     );
-}
+});
+
+export default Paginator;

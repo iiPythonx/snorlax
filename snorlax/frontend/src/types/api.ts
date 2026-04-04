@@ -28,9 +28,10 @@ export type Channel = {
 };
 
 export type Job = Video & {
-    status:   "finished" | "downloading" | "remuxing" | "errored";
+    status:   "finished" | "downloading" | "remuxing" | "failed";
     progress: number;
     speed:    number | null;
     eta:      number | null;
-    error:    string | null
+    error:    string | null;
+    job_id:   string;
 }

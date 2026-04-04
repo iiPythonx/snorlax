@@ -102,6 +102,10 @@ hr {
     article {
         width: 300px;
     }
+
+    article.item-job {
+        flex: 1;
+    }
 }
 
 .video-poster {
