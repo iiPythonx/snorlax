@@ -23,8 +23,8 @@ pre {
     text-wrap: wrap;
 }
 
-/* Pagination */
-.paginator {
+/* View */
+.view {
     width: 100%;
     justify-content: center;
     margin-top: 10px;

@@ -1,10 +1,10 @@
 import { useRef } from "preact/hooks";
-import Paginator from "../components/paginator";
-import type { PaginatorHandle } from "../components/paginator";
+import View from "../components/view";
+import type { ViewHandle } from "../components/view";
 import type { Job } from "../types/api";
 
 export default function Jobs() {
-    const viewRef = useRef<PaginatorHandle>(null);
+    const viewRef = useRef<ViewHandle>(null);
 
     const addJob = async () => {
         const url = prompt("Target URL (video/channel url)");
@@ -28,6 +28,6 @@ export default function Jobs() {
             </div>
         </section>
         <hr />
-        <Paginator type = "job" endpoint = "jobs" refreshTime = {10} onJobCancel = {cancelJob} ref = {viewRef} />
+        <View type = "job" endpoint = "jobs" refreshTime = {10} onJobCancel = {cancelJob} ref = {viewRef} />
     </>;
 }

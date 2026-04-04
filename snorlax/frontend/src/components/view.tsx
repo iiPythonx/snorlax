@@ -5,7 +5,7 @@ import { humanizeTime } from "../lib/time";
 import type { Video, Channel, Job } from "../types/api";
 import { forwardRef } from "preact/compat";
 
-type PaginatorProps = {
+type ViewProps = {
     type:         "video" | "channel" | "job";
     endpoint:     string;
     limit?:       number;
@@ -14,7 +14,7 @@ type PaginatorProps = {
     onJobCancel?: (job: Job) => void;
 };
 
-export type PaginatorHandle = {
+export type ViewHandle = {
     refresh: () => void;
 }
 
@@ -65,7 +65,7 @@ function JobItem({ item, onJobCancel }: { item: Job, onJobCancel?: (job: Job) =>
     </>
 }
 
-const Paginator = forwardRef<PaginatorHandle, PaginatorProps>(({
+const View = forwardRef<ViewHandle, ViewProps>(({
     type, endpoint, limit = 8, params, refreshTime, onJobCancel
 }, ref) => {
     const [page, setPage] = useState(1);
@@ -115,7 +115,7 @@ const Paginator = forwardRef<PaginatorHandle, PaginatorProps>(({
                     }
                 </article>)}
             </div>
-            <article className = "flex paginator">
+            <article className = "flex view">
                 {loadTime !== null && <span className = "api-time">[ {loadTime}ms ]</span>}
                 <div>
                     <button onClick = {() => page > 1 && setPage(page - 1)} disabled = {page === 1}>&lt; Back</button>
@@ -127,4 +127,4 @@ const Paginator = forwardRef<PaginatorHandle, PaginatorProps>(({
     );
 });
 
-export default Paginator;
+export default View;
