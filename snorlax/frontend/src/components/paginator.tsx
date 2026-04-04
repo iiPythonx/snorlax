@@ -14,31 +14,27 @@ type PaginatorProps = {
 function VideoItem({ item }: { item: Video }) {
     const video = item as Video;
     const videoBaseUrl = `/v1/assets/${video.channel_id}/${video.id}`;
-    return (
-        <article key = {video.id}>
-            <Link href = {`/watch/${video.id}`} className = "video-poster flex column">
-                <img src = {`${videoBaseUrl}/cover.webp`} />
-                <span className = "duration-string">{video.duration_string}</span>
-                <span>{video.title}</span>
-            </Link>
-            <div>
-                <Link href = {`/channel/${video.channel_preferred_id}`} className = "silent">{video.channel_name}</Link>
-                {" "}
-                <br />
-                <span>
-                {video.view_count.toLocaleString()} views • {humanizeTime(video.timestamp)}
-                </span>
-            </div>
-        </article>
-    );
+    return <>
+        <Link href = {`/watch/${video.id}`} className = "video-poster flex column">
+            <img src = {`${videoBaseUrl}/cover.webp`} />
+            <span className = "duration-string">{video.duration_string}</span>
+            <span>{video.title}</span>
+        </Link>
+        <div>
+            <Link href = {`/channel/${video.channel_preferred_id}`} className = "silent">{video.channel_name}</Link>
+            {" "}
+            <br />
+            <span>
+            {video.view_count.toLocaleString()} views • {humanizeTime(video.timestamp)}
+            </span>
+        </div>
+    </>;
 }
 
 function ChannelItem({ item }: { item: Channel }) {
     const channel = item as Channel;
     return (
-        <article key = {channel.id}>
-            <Link href = {`/channel/${channel.preferred_id}`}>{channel.name}</Link>
-        </article>
+        <Link href = {`/channel/${channel.preferred_id}`}>{channel.name}</Link>
     );
 }
 
@@ -77,18 +73,14 @@ export default function Paginator({ type, endpoint, limit = 8, params }: Paginat
         <div className = "flex column">
             <div className = "flex item-list">
                 {!loading && items.length === 0 && <span>No results returned from API.</span>}
-                {!loading && items.map((item) => {
-                    switch (type) {
-                        case "video":
-                            return <VideoItem key = {item.id} item = {item as Video} />
-
-                        case "channel":
-                            return <ChannelItem key = {item.id} item = {item as Channel} />
-
-                        case "job":
-                            return <JobItem key = {item.id} item = {item as Job} />
+                {!loading && items.map((item) => <article key = {item.id}>
+                    {
+                        type === "video" ? <VideoItem key = {item.id} item = {item as Video} /> :
+                        type === "channel" ? <ChannelItem key = {item.id} item = {item as Channel} /> :
+                        type === "job" ? <JobItem key = {item.id} item = {item as Job} /> :
+                        null
                     }
-                })}
+                </article>)}
             </div>
             <article className = "flex paginator">
                 {loadTime !== null && <span className = "api-time">[ {loadTime}ms ]</span>}
