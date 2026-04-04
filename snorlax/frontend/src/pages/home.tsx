@@ -1,10 +1,10 @@
-import Paginator from "../components/paginator";
+import View from "../components/view";
 
 export default function Home() {
     return <>
         <h2>Channels</h2>
-        <Paginator type = "channel" endpoint = "channels" limit = {16} />
+        <View type = "channel" endpoint = "channels" limit = {16} />
         <h2>Videos</h2>
-        <Paginator type = "video" endpoint = "videos" />
+        <View type = "video" endpoint = "videos" />
     </>;
 }

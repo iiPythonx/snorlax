@@ -23,8 +23,8 @@ pre {
     text-wrap: wrap;
 }
 
-/* Pagination */
-.paginator {
+/* View */
+.view {
     width: 100%;
     justify-content: center;
     margin-top: 10px;
@@ -101,6 +101,10 @@ hr {
 
     article {
         width: 300px;
+    }
+
+    article.item-job {
+        flex: 1;
     }
 }
 

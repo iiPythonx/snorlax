@@ -1,5 +1,5 @@
 import { useEffect } from "preact/hooks";
-import Paginator from "../components/paginator";
+import View from "../components/view";
 import { useChannel } from "../hooks/useChannel";
 import { useLocation } from "wouter";
 import { useHeaderActions } from "../hooks/useHeaderActions";
@@ -41,7 +41,7 @@ export default function ChannelPage({ id }: { id: string }) {
                 <span style = {{ lineHeight: 2 }}>{channel.subscribers.toLocaleString()} subscribers</span>
             </section>
             <hr />
-            <Paginator endpoint = "videos" type = "video" params = {{ channel_id: channel.id }} />
+            <View endpoint = "videos" type = "video" params = {{ channel_id: channel.id }} />
         </>}
     </>;
 }

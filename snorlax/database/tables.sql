@@ -17,8 +17,9 @@ CREATE TABLE IF NOT EXISTS videos (
     duration_string TEXT,
     timestamp       INTEGER,
     channel_id      TEXT,
-    caption_langs   TEXT,
-    chapters        TEXT,
+    caption_langs   TEXT,  -- JSON
+    chapters        TEXT,  -- JSON
+    available       BOOLEAN DEFAULT FALSE,
     FOREIGN KEY(channel_id) REFERENCES channels(id) ON DELETE CASCADE
 );
 
@@ -30,6 +31,39 @@ SELECT
     c.preferred_id AS channel_preferred_id
 FROM videos v
 JOIN channels c ON v.channel_id = c.id;
+
+-- Jobs
+CREATE TABLE IF NOT EXISTS jobs (
+    id         TEXT PRIMARY KEY,
+    video_id   TEXT NOT NULL,
+    url        TEXT NOT NULL,
+    status     TEXT DEFAULT "queued",
+    progress   INTEGER,
+    speed      REAL,
+    eta        INTEGER,
+    error      TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(video_id) REFERENCES videos(id) ON DELETE CASCADE
+);
+
+CREATE VIEW IF NOT EXISTS videos_w_job AS
+SELECT
+    v.*,
+    v.rowid AS rowid,
+    c.name AS channel_name,
+    c.preferred_id AS channel_preferred_id,
+    j.id AS job_id,
+    j.status,
+    j.progress,
+    j.speed,
+    j.eta,
+    j.error,
+    j.created_at
+FROM videos v
+JOIN channels c ON v.channel_id = c.id
+JOIN jobs j ON j.video_id = v.id;
+
+UPDATE jobs SET status = 'queued' WHERE status IN ('downloading', 'remuxing');
 
 -- Full text search
 CREATE VIRTUAL TABLE IF NOT EXISTS videos_fts USING fts5(

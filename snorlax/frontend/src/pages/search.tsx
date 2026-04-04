@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
-import Paginator from "../components/paginator";
+import View from "../components/view";
 
 export default function Search() {
     const [query, setQuery] = useState("");
@@ -24,7 +24,7 @@ export default function Search() {
             />
             <hr />
             <h2>Results</h2>
-            <Paginator type = "video" endpoint = "videos" params = {params} />
+            <View type = "video" endpoint = "videos" params = {params} />
         </main>
     </>;
 }

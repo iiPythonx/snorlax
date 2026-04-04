@@ -1,86 +1,35 @@
-import { useEffect, useRef, useState } from "preact/hooks";
-import { Link } from "wouter";
-import { humanizeTime } from "../lib/time";
-
-type Job = {
-    title:                string;
-    channel:              string;
-    channel_preferred_id: string;
-    timestamp:            number;
-    status:               string;
-    progress:             number;
-    speed?:               number;
-    eta?:                 number;
-};
-
-type JobMap = Record<string, Job>
+import { useRef } from "preact/hooks";
+import View from "../components/view";
+import type { ViewHandle } from "../components/view";
+import type { Job } from "../types/api";
 
 export default function Jobs() {
-    const [jobs, setJobs] = useState<JobMap>({});
-    const socketReference = useRef<WebSocket | null>(null);
+    const viewRef = useRef<ViewHandle>(null);
 
-    // Connect to websocket
-    useEffect(() => {
-        const ws = new WebSocket(`${window.location.port === '5173' ? 'http://localhost:8000' : ''}/v1/jobs`);
-        ws.addEventListener("message", (e) => setJobs(JSON.parse(e.data) as JobMap));
-        
-        socketReference.current = ws;
-
-        return () => ws.close();
-    }, []);
-
-    // Handle adding job
-    const addJob = () => {
+    const addJob = async () => {
         const url = prompt("Target URL (video/channel url)");
-        if (!url) return;
-
-        // Send off job
-        socketReference.current?.send(JSON.stringify({ type: "add-job", url }));
+        if (url) await fetch(`/v1/jobs/create`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url })
+        });
     }
 
-    // Handle canceling job
-    const cancelJob = (id: string) => {
-        socketReference.current?.send(JSON.stringify({ type: "cancel-job", id }));
-        setJobs((prev) => {
-            const { [id]: _, ...rest } = prev;
-            return rest;
-        });
+    const cancelJob = async (job: Job) => {
+        await fetch(`/v1/jobs/${job.job_id}`, { method: "DELETE" });
+        viewRef.current?.refresh();
     }
 
     return <>
         <section className = "flex column">
-            <div className = "flex">
+            <div className = "flex" style = {{ alignItems: "center" }}>
                 <h2>Current Jobs</h2>
-                <button className = "pad-left" id = "btn-add-job" onClick = {addJob}>Add Job</button>
+                <button className = "pad-left" onClick = {() => viewRef.current?.refresh()}>Refresh</button>
+                {"|"}
+                <button onClick = {addJob}>Add Job</button>
             </div>
         </section>
         <hr />
-        <section>
-            <div className = "flex column" id = "job-list">
-                {Object.entries(jobs).filter(([_, job]) => job.status).map(([id, job]) => {
-                    const finished = ["finished", "failed"].includes(job.status);
-
-                    // Progress calculation
-                    const completed_amount = Math.round(20 * (job.progress / 100));
-                    const progress_spacing = 20 - completed_amount;
-
-                    return (
-                        <article>
-                            <div className = "flex">
-                                <Link href = {`/watch/${id}`}>{job.title || id}</Link>
-                                <button className = "pad-left" onClick = {() => cancelJob(id)}>{finished ? "Remove" : "Cancel"} Job</button>
-                            </div>
-                            <div className = "flex">
-                                <Link href = {`/channel/${job.channel_preferred_id}`}>{job.channel || 'N/A'}</Link> •
-                                {" "}{job.timestamp ? humanizeTime(job.timestamp) : 'N/A'} • {job.status} {job.status === "downloading" && `• ${job.speed} MiB/s • ETA ${job.eta}s`}
-                                <pre className = "pad-left">[{"=".repeat(completed_amount)}{" ".repeat(progress_spacing)}] <span style = {{ width: "30px", display: "inline-block", textAlign: "right" }}>{job.progress}%</span></pre>
-                            </div>
-                            <br />
-                            <hr />
-                        </article>
-                    )
-                })}
-            </div>
-        </section>
+        <View type = "job" endpoint = "jobs" refreshTime = {10} onJobCancel = {cancelJob} ref = {viewRef} />
     </>;
 }

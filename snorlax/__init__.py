@@ -6,23 +6,21 @@ import typing
 from shutil import rmtree
 from contextlib import asynccontextmanager
 
-from fastapi import BackgroundTasks, Depends, FastAPI, Request, WebSocket, WebSocketDisconnect
+from fastapi import BackgroundTasks, Body, Depends, FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.websockets import WebSocketState
 from pydantic import Field
 
 from snorlax.config import ROOT, config
 from snorlax.database import db
-from snorlax.ingest import Snorlax
+from snorlax.ingest import process_queue, store
 
 # Handle API
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> typing.AsyncGenerator:
+async def lifespan(_: FastAPI) -> typing.AsyncGenerator:
     await db.init()
 
-    app.state.snorlax = Snorlax()
-    asyncio.create_task(app.state.snorlax.process_queue())
+    asyncio.create_task(process_queue())
 
     yield
     await db.close()
@@ -72,35 +70,21 @@ async def route_v1_video(request: Request, video_id: str, background_tasks: Back
 
     return JSONResponse({"code": 200, "data": video_data})
 
-async def print_job_updates(websocket: WebSocket) -> None:
-    while True:
-        try:
-            await websocket.send_json({
-                video_id: job.get_progress()
-                for video_id, job in app.state.snorlax.jobs.items()
-            })
-            await asyncio.sleep(2)
+@app.get("/v1/jobs")
+async def route_v1_jobs(pagination: typing.Annotated[dict, Depends(pagination_parameters)]) -> JSONResponse:
+    jobs, total = await db.get_jobs(**pagination)
+    return JSONResponse({"code": 200, "data": {"items": jobs, "total": total}})
 
-        except WebSocketDisconnect:
-            break
+@app.post("/v1/jobs/create")
+async def route_v1_job_create(url: typing.Annotated[str, Body(embed = True)]) -> JSONResponse:
+    await store.create(url)
+    return JSONResponse({"code": 200})
 
-@app.websocket("/v1/jobs")
-async def route_v1_jobs(websocket: WebSocket) -> None:
-    await websocket.accept()
-    task = asyncio.create_task(print_job_updates(websocket))
-
-    # Receive client data
-    try:
-        while websocket.application_state == WebSocketState.CONNECTED:
-            match await websocket.receive_json():
-                case {"type": "cancel-job", "id": video_id}:
-                    await app.state.snorlax.cancel_job(video_id)
-
-                case {"type": "add-job", "url": job_url}:
-                    await app.state.snorlax.fetch_url(job_url)
-
-    except WebSocketDisconnect:
-        task.cancel()
+@app.delete("/v1/jobs/{job_id}")
+async def route_v1_job_delete(job_id: str) -> JSONResponse:
+    await db.delete_job(job_id)
+    await store.cancel(job_id)
+    return JSONResponse({"code": 200})
 
 # Mount assets
 config.snorlax.video_path.mkdir(exist_ok = True)
