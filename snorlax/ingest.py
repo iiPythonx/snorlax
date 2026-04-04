@@ -50,6 +50,9 @@ class Job:
         if (data["status"] not in {"finished", "downloading"}) or ("title" not in data["info_dict"]):
             return
 
+        if "downloaded_bytes" not in data:
+            data["downloaded_bytes"] = 0
+
         self.progress = round((data["downloaded_bytes"] / (data["total_bytes"] or 0.1)) * 100)
         self.status = data["status"] if data["status"] != "finished" else "remuxing"
         self.speed = round((data["speed"] or 0) / (1024 ** 2), 2)
