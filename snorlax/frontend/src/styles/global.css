@@ -102,9 +102,11 @@ hr {
     article {
         width: 300px;
     }
-
-    article.item-job {
-        flex: 1;
+}
+.item-list-job {
+    flex-direction: column;
+    & > article {
+        width: 100%;
     }
 }
 

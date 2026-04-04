@@ -103,9 +103,9 @@ const View = forwardRef<ViewHandle, ViewProps>(({
 
     return (
         <div className = "flex column">
-            <div className = "flex item-list">
+            <div className = {`flex item-list item-list-${type}`}>
                 {!loading && items.length === 0 && <span>No results returned from API.</span>}
-                {!loading && items.map((item) => <article key = {item.id} className = {`item-${type}`}>
+                {!loading && items.map((item) => <article key = {item.id}>
                     {
                         type === "video" ? <VideoItem item = {item as Video} /> :
                         type === "channel" ? <ChannelItem item = {item as Channel} /> :
