@@ -9,8 +9,7 @@ import "videojs-hotkeys";
 
 import { createDurationString, humanizeTime } from "../lib/time";
 
-import { useVideo } from "../hooks/useVideo";
-import { useChannel } from "../hooks/useChannel";
+import { useAsset } from "../hooks/useAsset";
 import type { Chapter } from "../types/api";
 import { useHeaderActions } from "../hooks/useHeaderActions";
 import { usePageTitle } from "../hooks/usePageTitle";
@@ -168,20 +167,21 @@ function VideoPlayer({ src, poster, id, chapters, captions }: { src: string, pos
 }
 
 export default function Watch({ id }: { id: string }) {
-    const { video, errored: videoError } = useVideo(id);
-    const { channel, errored: channelError } = useChannel(video?.channel_id ?? "");
+    const { asset: video, done: videoLoaded } = useAsset(id, "video");
+    const { asset: channel, done: channelLoaded } = useAsset(video?.channel_id ?? "", "channel");
+
     const { setActions } = useHeaderActions();
     const [, navigate] = useLocation();
     const [store,] = useStore();
 
-    if (videoError || channelError) return <p>
+    if (!(video && channel)) return videoLoaded && channelLoaded ? <p>
         Snorlax failed to make an API request for this page.
         <br />
-        The video might not exist, or there was a server issue.
-    </p>;
+        This indicates either the video or channel doesn't exist, or there was a server issue.
+    </p> : null;
 
     useEffect(() => {
-        setActions(video ? [
+        setActions([
             {
                 label: "Remove Video",
                 onClick: async () => {
@@ -189,43 +189,48 @@ export default function Watch({ id }: { id: string }) {
                     navigate("/");
                 },
             },
-        ] : []);
+        ]);
         return () => setActions([]);
-    }, [id, video]);
+    }, [id]);
 
-    usePageTitle(video?.title || null);
+    usePageTitle(video.title || null);
 
-    return video && channel && <>
-        {(() => {
-            let description = video.description.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            description = description.replace(/(https?:\/\/[^\s]+)/g, `<a href = "$1" target = "_blank" rel = "noopener noreferrer">$1</a>`);
+    // Load description
+    let description = video.description.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    description = description.replace(/(https?:\/\/[^\s]+)/g, `<a href = "$1" target = "_blank" rel = "noopener noreferrer">$1</a>`);
 
-            const date = new Date(video.timestamp * 1000);
-            const date_string = `${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getDate().toString().padStart(2, "0")}/${date.getFullYear()}`;
+    // Timestamping
+    const date = new Date(video.timestamp * 1000);
+    const date_string = `${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getDate().toString().padStart(2, "0")}/${date.getFullYear()}`;
 
-            const videoBaseUrl = `/v1/assets/${video.channel_id}/${video.id}`;
+    // Base URL for captions, stream, poster
+    const videoBaseUrl = `/v1/assets/${video.channel_id}/${video.id}`;
 
-            // Handle captions
-            const selected = store.settings.languages.find(lang => video?.caption_langs.includes(lang));
-            const captions = video?.caption_langs ? video?.caption_langs.map((code) => ({
-                kind: "captions",
-                src: `${videoBaseUrl}/sub.${code}.vtt`,
-                srclang: code,
-                label: INTL.of(code) || code,
-                default: code === selected
-            })) : [];
+    // Handle captions
+    const selected = store.settings.languages.find(lang => video.caption_langs.includes(lang));
+    const captions = video.caption_langs ? video.caption_langs.map((code) => ({
+        kind: "captions",
+        src: `${videoBaseUrl}/sub.${code}.vtt`,
+        srclang: code,
+        label: INTL.of(code) || code,
+        default: code === selected
+    })) : [];
 
-            return <>
-                <h2>{video.title}</h2>
-                <VideoPlayer src = {`${videoBaseUrl}/video.mkv`} poster = {`${videoBaseUrl}/cover.webp`} id = {id} chapters = {video.chapters} captions = {captions} />
-                <hr />
-                <span>
-                    <Link href = {`/channel/${channel.preferred_id}`}>{channel.name}</Link> ({channel.subscribers.toLocaleString()} subscribers) <br />
-                    {createDurationString(video.duration)} • {video.view_count.toLocaleString()} views • {video.like_count.toLocaleString()} likes • {date_string} ({humanizeTime(video.timestamp)})
-                </span>
-                <hr />
-                <pre style = "margin-bottom: 20px;" dangerouslySetInnerHTML = {{ __html: description }}></pre>
-            </>;
-        })()}
+    return <>
+        <h2>{video.title}</h2>
+        <VideoPlayer
+            src = {`${videoBaseUrl}/video.mkv`}
+            poster = {`${videoBaseUrl}/cover.webp`}
+            id = {id}
+            chapters = {video.chapters}
+            captions = {captions}
+        />
+        <hr />
+        <span>
+            <Link href = {`/channel/${channel.preferred_id}`}>{channel.name}</Link> ({channel.subscribers.toLocaleString()} subscribers) <br />
+            {createDurationString(video.duration)} • {video.view_count.toLocaleString()} views • {video.like_count.toLocaleString()} likes • {date_string} ({humanizeTime(video.timestamp)})
+        </span>
+        <hr />
+        <pre style = "margin-bottom: 20px;" dangerouslySetInnerHTML = {{ __html: description }}></pre>
     </>;
 }
