@@ -74,14 +74,12 @@ class Job:
             if not isinstance(e, DownloadError):
                 traceback.print_exc()
 
-    async def start(self) -> None:
+    async def run(self) -> None:
         if not TEMP_PATH.is_dir():
             TEMP_PATH.mkdir(parents = True)
 
         # Handle video data
         await self._download_video()
-
-        await db.update_job(self.id, status = "finished", progress = 100, speed = None, eta = None)
         self.status = "finished"
 
         # Reorganize everything
@@ -148,7 +146,8 @@ class JobStore:
 
     async def launch(self, job: Job) -> None:
         self.jobs[job.id] = job
-        await job.start()
+        await job.run()
+        await db.update_job(job.id, status = "finished", progress = 100, speed = None, eta = None)
 
     async def flush_jobs_to_db(self) -> None:
         for job_id, job in self.jobs.items():
