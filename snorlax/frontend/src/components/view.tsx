@@ -47,7 +47,7 @@ function ChannelItem({ item }: { item: Channel }) {
 
 function JobItem({ item, onJobCancel }: { item: Job, onJobCancel?: (job: Job) => void }) {
     const finished = ["finished", "failed"].includes(item.status);
-    const completed_amount = Math.round(20 * (item.progress / 100));
+    const completed_amount = Math.round(20 * ((item.progress || 0) / 100));
     const progress_spacing = 20 - completed_amount;
 
     return <>
@@ -58,7 +58,7 @@ function JobItem({ item, onJobCancel }: { item: Job, onJobCancel?: (job: Job) =>
         <div className = "flex">
             <Link href = {`/channel/${item.channel_preferred_id}`}>{item.channel_name}</Link> •
             {" "}{humanizeTime(item.timestamp)} • {item.status} {item.status === "downloading" && `• ${item.speed} MiB/s • ETA ${item.eta}s`}
-            <pre className = "pad-left">[{"=".repeat(completed_amount)}{" ".repeat(progress_spacing)}] <span style = {{ width: "30px", display: "inline-block", textAlign: "right" }}>{item.progress}%</span></pre>
+            <pre className = "pad-left">[{"=".repeat(completed_amount)}{" ".repeat(progress_spacing)}] <span style = {{ width: "30px", display: "inline-block", textAlign: "right" }}>{item.progress || 0}%</span></pre>
         </div>
         <br />
         <hr />
