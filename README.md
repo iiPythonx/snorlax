@@ -51,3 +51,4 @@ Current API version is v1, docs available [here](.github/docs/v1.md).
 - [x] Migrate the ingest methods to custom API endpoints
 - [ ] Ability to set video expiration time, turning Snorlax into something like [cobalt](https://cobalt.tools/)
 - [x] Search mechanism for ~~channels and~~ videos
+- [ ] Clean up database column system, for the love of god

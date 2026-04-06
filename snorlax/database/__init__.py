@@ -10,12 +10,12 @@ from snorlax.config import ROOT, config
 
 VIDEO_PARAMS         = ("id", "title", "duration", "view_count", "timestamp", "channel_id", "available", "channel_name", "channel_preferred_id")
 VIDEO_PARAMS_FULL    = VIDEO_PARAMS + ("like_count", "caption_langs", "chapters", "description")
-VIDEO_PARAMS_INSERT  = ("id", "title", "duration", "like_count", "view_count", "timestamp", "channel_id", "available")
 
 CHANNEL_PARAMS       = ("id", "handle", "name", "subscribers", "preferred_id")
-
 VIDEO_JOB_PARAMS     = ("job_id", "status", "progress", "speed", "eta", "error")
+
 JSON_COLUMNS         = ("caption_langs", "chapters")
+VIDEO_PARAMS_INSERT  = ("id", "title", "duration", "like_count", "view_count", "timestamp", "channel_id", "available") + JSON_COLUMNS
 
 SEARCH_VALID_TOKENS = string.ascii_letters + string.digits + " "
 
