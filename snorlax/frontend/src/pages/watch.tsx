@@ -175,10 +175,14 @@ export default function Watch({ id }: { id: string }) {
     const [store,] = useStore();
 
     if (!(video && channel)) return videoLoaded && channelLoaded ? <p>
-        Snorlax failed to make an API request for this page.
-        <br />
+        Snorlax failed to make an API request for this page. <br />
         This indicates either the video or channel doesn't exist, or there was a server issue.
     </p> : null;
+
+    if (!video.available) return <p>
+        The request video is currently not available. <br />
+        This usually means it's queued to download, or is actively doing so.
+    </p>;
 
     useEffect(() => {
         setActions([

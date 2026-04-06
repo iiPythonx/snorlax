@@ -8,11 +8,14 @@ import aiosqlite
 
 from snorlax.config import ROOT, config
 
-VIDEO_PARAMS           = ("id", "title", "description", "view_count", "like_count", "duration", "timestamp", "channel_id", "caption_langs", "chapters")
-VIDEO_W_CHANNEL_PARAMS = VIDEO_PARAMS + ("channel_name", "channel_preferred_id")
-VIDEO_W_JOB_PARAMS     = VIDEO_W_CHANNEL_PARAMS + ("job_id", "status", "progress", "speed", "eta", "error")
-CHANNEL_PARAMS         = ("id", "handle", "name", "subscribers", "preferred_id")
-JSON_COLUMNS           = ("caption_langs", "chapters")
+VIDEO_PARAMS         = ("id", "title", "duration", "timestamp", "channel_id", "available", "channel_name", "channel_preferred_id")
+VIDEO_PARAMS_FULL    = VIDEO_PARAMS + ("view_count", "like_count", "caption_langs", "chapters")
+
+VIDEO_CHANNEL_PARAMS = ("channel_name", "channel_preferred_id")
+CHANNEL_PARAMS       = ("id", "handle", "name", "subscribers", "preferred_id")
+
+VIDEO_JOB_PARAMS     = ("job_id", "status", "progress", "speed", "eta", "error")
+JSON_COLUMNS         = ("caption_langs", "chapters")
 
 SEARCH_VALID_TOKENS = string.ascii_letters + string.digits + " "
 
@@ -44,17 +47,13 @@ class Database:
 
     # JSON storage
     @staticmethod
-    def _serialize(result: dict[str, typing.Any]) -> dict[str, typing.Any]:
-        return result | {
-            k: json.dumps(v)
-            for k, v in result.items() if k in JSON_COLUMNS
-        }
+    def _json(data: dict[str, typing.Any], direction: typing.Literal["dump", "load"]) -> dict[str, typing.Any]:
+        if "available" in data:
+            data["available"] = bool(data["available"])
 
-    @staticmethod
-    def _deserialize(result: dict[str, typing.Any]) -> dict[str, typing.Any]:
-        return result | {
-            k: json.loads(v)
-            for k, v in result.items() if k in JSON_COLUMNS
+        return data | {
+            k: getattr(json, f"{direction}s")(v)
+            for k, v in data.items() if k in JSON_COLUMNS
         }
 
     # Querying
@@ -113,7 +112,7 @@ class Database:
                 params.append(offset)
 
         async with self.db.execute_fetchall(query, params) as rows:
-            return [self._deserialize(dict(zip(columns, row))) for row in rows], count_result[0]
+            return [self._json(dict(zip(columns, row)), "load") for row in rows], count_result[0]
 
     # Channels
     async def add_channel(self, channel_id: str, handle: str | None, name: str, subscribers: int) -> None:
@@ -140,7 +139,7 @@ class Database:
 
     # Videos
     async def add_video(self, **video) -> None:
-        video = self._serialize(video)
+        video = self._json(video, "dump")
         await self.db.execute(
             f"INSERT OR IGNORE INTO videos ({', '.join(VIDEO_PARAMS)}) VALUES ({', '.join('?' for _ in VIDEO_PARAMS)})",
             tuple(video[p] for p in VIDEO_PARAMS)
@@ -148,9 +147,9 @@ class Database:
         await self.db.commit()
 
     async def get_video(self, video_id: str) -> dict[str, typing.Any] | None:
-        async with self.db.execute(f"SELECT {', '.join(VIDEO_W_CHANNEL_PARAMS)} FROM videos_w_channel WHERE id = ?", (video_id,)) as result:
+        async with self.db.execute(f"SELECT {', '.join(VIDEO_PARAMS_FULL + VIDEO_CHANNEL_PARAMS)} FROM videos_w_channel WHERE id = ?", (video_id,)) as result:
             result = await result.fetchone()
-            return self._deserialize(dict(zip(VIDEO_W_CHANNEL_PARAMS, result))) if result else None
+            return self._json(dict(zip(VIDEO_PARAMS_FULL + VIDEO_CHANNEL_PARAMS, result)), "load") if result else None
 
     async def get_videos(
         self,
@@ -175,7 +174,7 @@ class Database:
             }
             kwargs["filters"].append(("videos_fts", "MATCH", " ".join(f"{word}*" for word in query.split())))
 
-        return await self._fetch(columns = VIDEO_W_CHANNEL_PARAMS, limit = limit, page = page, **kwargs)
+        return await self._fetch(columns = VIDEO_PARAMS, limit = limit, page = page, **kwargs)
 
     async def delete_video(self, video_id: str) -> None:
         await self.db.execute("DELETE FROM videos WHERE id = ?", (video_id,))
@@ -196,7 +195,7 @@ class Database:
     async def get_jobs(self, limit: int | None = None, page: int | None = 1) -> tuple[list[dict], int]:
         return await self._fetch(
             table = "videos_w_job",
-            columns = VIDEO_W_JOB_PARAMS,
+            columns = VIDEO_PARAMS + VIDEO_CHANNEL_PARAMS + VIDEO_JOB_PARAMS,
             order = "created_at DESC",
             limit = limit,
             page = page

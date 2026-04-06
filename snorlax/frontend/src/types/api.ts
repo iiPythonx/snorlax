@@ -17,6 +17,7 @@ export type Video = {
     chapters:             Chapter[];
     channel_name:         string;
     channel_preferred_id: string;
+    available:            boolean;
 };
 
 export type Channel = {
