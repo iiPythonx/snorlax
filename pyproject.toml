@@ -1,20 +1,20 @@
 [build-system]
-requires = ["uv_build>=0.10.7,<0.11.0"]
+requires = ["uv_build>=0.11.3,<0.12"]
 build-backend = "uv_build"
 
 [project]
 name = "snorlax"
-version = "4.3.3"
+version = "4.4.0"
 description = "Local-first video downloading and hosting"
 readme = "README.md"
 license = "GPL-3.0-or-later"
 license-files = ["LICENSE.txt"]
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
-    "aiosqlite>=0.21.0",
-    "fastapi>=0.122.0",
-    "uvicorn[standard]>=0.38.0",
-    "yt-dlp[curl-cffi,default]>=2025.11.12",
+    "aiosqlite>=0.22.1",
+    "fastapi>=0.135.3",
+    "uvicorn[standard]>=0.44.0",
+    "yt-dlp[curl-cffi,default]>=2026.3.17",
 ]
 
 [project.urls]
