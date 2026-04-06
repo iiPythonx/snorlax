@@ -9,7 +9,7 @@ from yt_dlp import YoutubeDL
 from yt_dlp.utils import DownloadError
 
 from snorlax.config import config
-from snorlax.database import VIDEO_PARAMS, db
+from snorlax.database import VIDEO_PARAMS_INSERT, db
 
 TEMP_PATH = config.snorlax.video_path / "in_progress"
 YTDL_OPTS = {
@@ -121,7 +121,7 @@ class JobStore:
 
             case "video":
                 await db.add_channel(info["channel_id"], info.get("uploader_id"), info["uploader"], info["channel_follower_count"])
-                await db.add_video(**{k: v for k, v in info.items() if k in VIDEO_PARAMS} | \
+                await db.add_video(**{k: v for k, v in info.items() if k in VIDEO_PARAMS_INSERT} | \
                     {"caption_langs": list((info["requested_subtitles"] or {}).keys()), "chapters": info["chapters"] or [], "available": False})
 
                 job_id = str(uuid4())

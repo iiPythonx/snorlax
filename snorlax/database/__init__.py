@@ -10,8 +10,8 @@ from snorlax.config import ROOT, config
 
 VIDEO_PARAMS         = ("id", "title", "duration", "view_count", "timestamp", "channel_id", "available", "channel_name", "channel_preferred_id")
 VIDEO_PARAMS_FULL    = VIDEO_PARAMS + ("like_count", "caption_langs", "chapters", "description")
+VIDEO_PARAMS_INSERT  = ("id", "title", "duration", "like_count", "view_count", "timestamp", "channel_id", "available")
 
-VIDEO_CHANNEL_PARAMS = ("channel_name", "channel_preferred_id")
 CHANNEL_PARAMS       = ("id", "handle", "name", "subscribers", "preferred_id")
 
 VIDEO_JOB_PARAMS     = ("job_id", "status", "progress", "speed", "eta", "error")
@@ -141,15 +141,15 @@ class Database:
     async def add_video(self, **video) -> None:
         video = self._json(video, "dump")
         await self.db.execute(
-            f"INSERT OR IGNORE INTO videos ({', '.join(VIDEO_PARAMS)}) VALUES ({', '.join('?' for _ in VIDEO_PARAMS)})",
-            tuple(video[p] for p in VIDEO_PARAMS)
+            f"INSERT OR IGNORE INTO videos ({', '.join(VIDEO_PARAMS_INSERT)}) VALUES ({', '.join('?' for _ in VIDEO_PARAMS_INSERT)})",
+            tuple(video[p] for p in VIDEO_PARAMS_INSERT)
         )
         await self.db.commit()
 
     async def get_video(self, video_id: str) -> dict[str, typing.Any] | None:
-        async with self.db.execute(f"SELECT {', '.join(VIDEO_PARAMS_FULL + VIDEO_CHANNEL_PARAMS)} FROM videos_w_channel WHERE id = ?", (video_id,)) as result:
+        async with self.db.execute(f"SELECT {', '.join(VIDEO_PARAMS_FULL)} FROM videos_w_channel WHERE id = ?", (video_id,)) as result:
             result = await result.fetchone()
-            return self._json(dict(zip(VIDEO_PARAMS_FULL + VIDEO_CHANNEL_PARAMS, result)), "load") if result else None
+            return self._json(dict(zip(VIDEO_PARAMS_FULL, result)), "load") if result else None
 
     async def get_videos(
         self,
@@ -195,7 +195,7 @@ class Database:
     async def get_jobs(self, limit: int | None = None, page: int | None = 1) -> tuple[list[dict], int]:
         return await self._fetch(
             table = "videos_w_job",
-            columns = VIDEO_PARAMS + VIDEO_CHANNEL_PARAMS + VIDEO_JOB_PARAMS,
+            columns = VIDEO_PARAMS + VIDEO_JOB_PARAMS,
             order = "created_at DESC",
             limit = limit,
             page = page
