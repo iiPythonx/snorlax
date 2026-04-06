@@ -9,7 +9,7 @@ description = "Local-first video downloading and hosting"
 readme = "README.md"
 license = "GPL-3.0-or-later"
 license-files = ["LICENSE.txt"]
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "aiosqlite>=0.21.0",
     "fastapi>=0.122.0",
