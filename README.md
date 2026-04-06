@@ -18,9 +18,7 @@ You can also run the frontend in development mode via `bun dev`.
 
 ### Configuration
 
-All configuration data for Snorlax is stored in `snorlax.toml`.  
-
-Right now, you can edit:
+All configuration data for Snorlax is stored in `snorlax.toml`. Right now, you can edit:
 - `snorlax.database_path`
 - `snorlax.video_path`
 - `videos.subtitle_languages`
@@ -47,8 +45,21 @@ Current API version is v1, docs available [here](.github/docs/v1.md).
 
 ### Roadmap
 
-- [x] Migrate /watch to an API endpoint, with JS-based humanize
-- [x] Migrate the ingest methods to custom API endpoints
+Current features:
+- Browsing videos and channels
+- Adding, viewing, removing jobs from the management menu
+- Settings page with support for automatic subtitles, autoplay, sponsorblock, and progress saving
+- Endpoints and buttons for removing videos and channels
+- Job system integrated into database for persistence, with auto restart if the server reboots or something mid-way
+- Somewhat robust database with all the data you could want
+- Video.js based web player with support for captions/subtitles **AND** chapters
+- API that doesn't suck, complete with full pagination
+
+Planned at some point:
+
 - [ ] Ability to set video expiration time, turning Snorlax into something like [cobalt](https://cobalt.tools/)
-- [x] Search mechanism for ~~channels and~~ videos
-- [ ] Clean up database column system, for the love of god
+- [ ] Search channels in addition to videos
+- [ ] Browse page for videos, that has sorting options by likes, views, etc.
+    - [ ] Filtering (by channel, by date range, etc.)
+
+Suggesting features can be done by [opening an issue](https://github.com/iipythonx/snorlax/issues/new).
