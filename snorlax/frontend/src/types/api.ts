@@ -7,17 +7,20 @@ export type Chapter = {
 export type Video = {
     id:                   string;
     title:                string;
-    description:          string;
-    view_count:           number;
-    like_count:           number;
     duration:             number;
+    view_count:           number;
     timestamp:            number;
     channel_id:           string;
-    caption_langs:        string[];
-    chapters:             Chapter[];
     channel_name:         string;
     channel_preferred_id: string;
     available:            boolean;
+};
+
+export type VideoFull = Video & {
+    like_count:           number;
+    description:          string;
+    caption_langs:        string[];
+    chapters:             Chapter[];
 };
 
 export type Channel = {
@@ -28,11 +31,11 @@ export type Channel = {
     preferred_id: string;
 };
 
-export type Job = Video & {
+export type Job = Omit<Video, "view_count" | "available"> & {
+    job_id:   string;
     status:   "finished" | "downloading" | "remuxing" | "failed";
     progress: number | null;
     speed:    number | null;
     eta:      number | null;
     error:    string | null;
-    job_id:   string;
 }

@@ -1,8 +1,8 @@
 import { useState, useEffect } from "preact/hooks";
-import type { Video, Channel } from "../types/api";
+import type { Channel, VideoFull } from "../types/api";
 
 type AssetMap = {
-    video: Video;
+    video: VideoFull;
     channel: Channel;
 }
 
