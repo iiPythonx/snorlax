@@ -197,8 +197,9 @@ class Database:
         async with self.db.execute_fetchall("SELECT id, video_id, url FROM jobs WHERE status = 'queued' ORDER BY created_at") as result:
             return [tuple(job) for job in result]
 
-    async def delete_job(self, job_id: str) -> None:
-        await self.db.execute("DELETE FROM jobs WHERE id = ?", (job_id,))
-        await self.db.commit()
+    async def delete_job(self, job_id: str) -> bool:
+        async with self.db.execute("DELETE FROM jobs WHERE id = ?", (job_id,)) as result:
+            await self.db.commit()
+            return result.rowcount > 0
 
 db = Database()

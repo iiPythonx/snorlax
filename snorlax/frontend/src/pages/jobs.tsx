@@ -8,11 +8,14 @@ export default function Jobs() {
 
     const addJob = async () => {
         const url = prompt("Target URL (video/channel url)");
-        if (url) await fetch(`/v1/jobs/create`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ url })
-        });
+        if (url) {
+            const response = await (await fetch(`/v1/jobs/create`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url })
+            })).json();
+            if (response.code !== 200) alert(response.data.message);
+        }
     }
 
     const cancelJob = async (job: Job) => {

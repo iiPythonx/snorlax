@@ -100,7 +100,7 @@ class JobStore:
         self.queue: asyncio.Queue[tuple[str, str, str]] = asyncio.Queue()
         self.jobs: dict[str, Job] = {}
 
-    async def create(self, url: str) -> None:
+    async def create(self, url: str) -> tuple[bool, str | None]:
 
         # YouTube: Remove playlist data from video watch URL
         # This prevents us from getting stuck in a loop of processing the same URL endlessly
@@ -109,32 +109,40 @@ class JobStore:
                 url = url.split(item)[0]
 
         # Handle extraction
-        info: dict[str, typing.Any] = await asyncio.to_thread(self.ytdl.extract_info, url, download = False)  # pyright: ignore[reportAssignmentType]
-        match media_type := info.get("_type", info.get("media_type")):
-            case "playlist":
-                for item in info["entries"]:
-                    item_url = item.get("url") or item.get("webpage_url")
-                    if item_url is None:
-                        continue
+        try:
+            info: dict[str, typing.Any] = await asyncio.to_thread(self.ytdl.extract_info, url, download = False)  # pyright: ignore[reportAssignmentType]
+            match media_type := info.get("_type", info.get("media_type")):
+                case "playlist":
+                    for item in info["entries"]:
+                        item_url = item.get("url") or item.get("webpage_url")
+                        if item_url is None:
+                            continue
 
-                    await self.create(item_url)
+                        await self.create(item_url)
 
-            case "video":
-                await db.add_channel(info["channel_id"], info.get("uploader_id"), info["uploader"], info["channel_follower_count"])
-                await db.add_video(**{k: v for k, v in info.items() if k in VIDEO_COLUMNS.get("insert")} | \
-                    {"caption_langs": list((info["requested_subtitles"] or {}).keys()), "chapters": info["chapters"] or [], "available": False})
+                case "video":
+                    await db.add_channel(info["channel_id"], info.get("uploader_id"), info["uploader"], info["channel_follower_count"])
+                    await db.add_video(**{k: v for k, v in info.items() if k in VIDEO_COLUMNS.get("insert")} | \
+                        {"caption_langs": list((info["requested_subtitles"] or {}).keys()), "chapters": info["chapters"] or [], "available": False})
 
-                job_id = str(uuid4())
+                    job_id = str(uuid4())
 
-                # Send job to database and immediate queue
-                await db.add_job(job_id, info["id"], url)
-                await self.queue.put((job_id, info["id"], url))
+                    # Send job to database and immediate queue
+                    await db.add_job(job_id, info["id"], url)
+                    await self.queue.put((job_id, info["id"], url))
 
-            case _:
-                raise ValueError(f"Received an unsupported media type: {media_type}")
+                case _:
+                    raise ValueError(f"Received an unsupported media type: {media_type}")
 
-    async def update(self) -> None:
-        pass
+        except Exception as e:
+            message = str(e)
+            if isinstance(e, DownloadError):
+                message = message.split("[0m ")[1]
+
+            traceback.print_exc()
+            return False, message
+
+        return True, None
 
     async def queued(self) -> tuple[str, str, str]:
         return await self.queue.get()

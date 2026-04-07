@@ -77,12 +77,18 @@ async def route_v1_jobs(pagination: typing.Annotated[dict, Depends(pagination_pa
 
 @app.post("/v1/jobs/create")
 async def route_v1_job_create(url: typing.Annotated[str, Body(embed = True)]) -> JSONResponse:
-    await store.create(url)
-    return JSONResponse({"code": 200})
+    success, error = await store.create(url)
+    return JSONResponse({
+        "code": 200 if success else 400,
+        "data": {"message": error}
+    }, status_code = 200 if success else 400)
 
 @app.delete("/v1/jobs/{job_id}")
 async def route_v1_job_delete(job_id: str) -> JSONResponse:
-    await db.delete_job(job_id)
+    success = await db.delete_job(job_id)
+    if not success:
+        return JSONResponse({"code": 404, "data": {"message": "The specified job does not exist."}}, status_code = 404)
+
     await store.cancel(job_id)
     return JSONResponse({"code": 200})
 
