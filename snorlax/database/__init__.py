@@ -107,9 +107,13 @@ class Database:
             return [self._json(dict(zip(columns, row)), "load") for row in rows], count_result[0]
 
     # Channels
-    async def add_channel(self, channel_id: str, handle: str | None, name: str, subscribers: int) -> None:
-        await self.db.execute("INSERT OR IGNORE INTO channels VALUES (?, ?, ?, ?)", (channel_id, handle, name, subscribers))
-        await self.db.commit()
+    async def add_channel(self, channel_id: str, handle: str | None, name: str, subscribers: int) -> bool:
+        async with self.db.execute(
+            "INSERT OR IGNORE INTO channels VALUES (?, ?, ?, ?)",
+            (channel_id, handle, name, subscribers)
+        ) as result:
+            await self.db.commit()
+            return result.rowcount > 0
 
     async def get_channel(self, channel_id: str) -> dict[str, typing.Any] | None:
         async with self.db.execute("SELECT * FROM channels WHERE id = ? OR handle = ?", (channel_id, channel_id)) as result:
@@ -130,13 +134,14 @@ class Database:
         await self.db.commit()
 
     # Videos
-    async def add_video(self, **video) -> None:
+    async def add_video(self, **video) -> bool:
         video, insert_columns = self._json(video, "dump"), VIDEO_COLUMNS.get("insert")
-        await self.db.execute(
+        async with self.db.execute(
             f"INSERT OR IGNORE INTO videos ({', '.join(insert_columns)}) VALUES ({', '.join('?' for _ in insert_columns)})",
             tuple(video[p] for p in insert_columns)
-        )
-        await self.db.commit()
+        ) as result:
+            await self.db.commit()
+            return result.rowcount > 0
 
     async def get_video(self, video_id: str) -> dict[str, typing.Any] | None:
         async with self.db.execute(f"SELECT {', '.join(VIDEO_COLUMNS.get('full'))} FROM videos_w_channel WHERE id = ?", (video_id,)) as result:
@@ -170,6 +175,10 @@ class Database:
 
     async def delete_video(self, video_id: str) -> None:
         await self.db.execute("DELETE FROM videos WHERE id = ?", (video_id,))
+        await self.db.commit()
+    
+    async def set_video_available(self, video_id: str, available: bool) -> None:
+        await self.db.execute("UPDATE videos SET available = ? WHERE id = ?", (available, video_id))
         await self.db.commit()
 
     # Jobs

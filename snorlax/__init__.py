@@ -3,13 +3,13 @@
 # Modules
 import asyncio
 import typing
-from shutil import rmtree
+from shutil import copyfileobj, rmtree
 from contextlib import asynccontextmanager
 
-from fastapi import BackgroundTasks, Body, Depends, FastAPI, Request
+from fastapi import BackgroundTasks, Body, Depends, FastAPI, Request, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from snorlax.config import ROOT, config
 from snorlax.database import db
@@ -70,6 +70,77 @@ async def route_v1_video(request: Request, video_id: str, background_tasks: Back
 
     return JSONResponse({"code": 200, "data": video_data})
 
+# Metadata creation
+class Chapter(BaseModel):
+    start_time: int
+    end_time:   int
+    title:      str
+
+class VideoInsertParameters(BaseModel):
+    id:            str
+    title:         str
+    duration:      int
+    view_count:    int
+    timestamp:     int
+    channel_id:    str
+    like_count:    int
+    description:   str
+    caption_langs: list[str]
+    chapters:      list[Chapter]
+
+class ChannelInsertParameters(BaseModel):
+    channel_id:  str
+    handle:      str | None
+    name:        str
+    subscribers: int
+
+@app.post("/v1/video/create")
+async def route_v1_video_create(video: VideoInsertParameters) -> JSONResponse:
+    if await db.get_channel(video.channel_id) is None:
+        return JSONResponse({
+            "code": 400,
+            "data": {
+                "message": "The channel you have attempted to publish to does not exist, please create it first."
+            }
+        }, status_code = 400)
+
+    code = 201 if await db.add_video(available = False, **video.model_dump()) else 200
+    return JSONResponse({"code": code}, status_code = code)
+
+@app.post("/v1/channel/create")
+async def route_v1_channel_create(channel: ChannelInsertParameters) -> JSONResponse:
+    code = 201 if await db.add_channel(**channel.model_dump()) else 200
+    return JSONResponse({"code": code}, status_code = code)
+
+# Handle video uploading (video files and posters)
+@app.post("/v1/video/{video_id}/{asset_type}")
+async def route_v1_asset_upload(video_id: str, asset_type: str, file: UploadFile) -> JSONResponse:
+    if asset_type not in {"video.mkv", "cover.webp"}:
+        return JSONResponse({
+            "code": 400,
+            "data": {
+                "message": "Specified asset target is invalid, this endpoint only covers videos and covers."
+            }
+        }, status_code = 400)
+
+    video_data = await db.get_video(video_id)
+    if video_data is None:
+        return JSONResponse({"code": 404, "data": {"message": "The specified video does not exist."}}, status_code = 404)
+
+    parent = config.snorlax.video_path / video_data["channel_id"] / video_id
+    parent.mkdir(parents = True, exist_ok = True)
+
+    # Begin stream writing into file
+    with (parent / asset_type).open("wb") as handle:
+        await asyncio.to_thread(copyfileobj, file.file, handle)
+
+    # Mark video as available
+    if (parent / "video.mkv").is_file() and (parent / "cover.webp").is_file():
+        await db.set_video_available(video_id, True)
+
+    return JSONResponse({"code": 200, "data": video_data})
+
+# Handle jobs
 @app.get("/v1/jobs")
 async def route_v1_jobs(pagination: typing.Annotated[dict, Depends(pagination_parameters)]) -> JSONResponse:
     jobs, total = await db.get_jobs(**pagination)
