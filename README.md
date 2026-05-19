@@ -11,7 +11,7 @@ bun run build
 Launch the backend:
 ```sh
 uv pip install .
-uv run uvicorn snorlax:app
+uv run uvicorn snorlax.app:app
 ```
 
 You can also run the frontend in development mode via `bun dev`.
