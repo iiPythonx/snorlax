@@ -1,7 +1,12 @@
 # Copyright (c) 2025-2026 iiPython
 
+import typing
 from enum import StrEnum
 from dataclasses import dataclass
+
+from snorlax.config import config
+
+TEMP_PATH = config.snorlax.video_path / "in_progress"
 
 class JobStatus(StrEnum):
     QUEUED         = "queued"
@@ -21,7 +26,13 @@ class Job:
     progress: int          = 0
     speed:    float | None = None
     eta:      int | None   = None
-    error:    str | None   = None
+
+    def build_status(self) -> dict[str, typing.Any]:
+        return {
+            "progress": self.progress,
+            "speed": self.speed,
+            "eta": self.eta
+        }
 
 @dataclass
 class ProgressEvent:
@@ -29,3 +40,8 @@ class ProgressEvent:
     progress: int
     speed:    float | None
     eta:      int | None
+
+# Shared imports
+from .dlp import dlp
+from .runner import run
+from .intake import queue

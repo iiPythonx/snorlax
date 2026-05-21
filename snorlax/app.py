@@ -13,14 +13,14 @@ from pydantic import BaseModel, Field
 
 from snorlax.config import ROOT, config
 from snorlax.database import db
-from snorlax.ingest import process_queue, store
+from snorlax.ingress.intake import submit_url, queue
 
 # Handle API
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> typing.AsyncGenerator:
     await db.init()
 
-    asyncio.create_task(process_queue())
+    asyncio.create_task(queue.process())
 
     yield
     await db.close()
@@ -144,15 +144,17 @@ async def route_v1_asset_upload(video_id: str, asset_type: str, file: UploadFile
 @app.get("/v1/jobs")
 async def route_v1_jobs(pagination: typing.Annotated[dict, Depends(pagination_parameters)]) -> JSONResponse:
     jobs, total = await db.get_jobs(**pagination)
+    for job in jobs:
+        backend_job = queue.active_jobs.get(job["job_id"])
+        if backend_job:
+            job |= backend_job.build_status()
+
     return JSONResponse({"code": 200, "data": {"items": jobs, "total": total}})
 
 @app.post("/v1/jobs/create")
 async def route_v1_job_create(url: typing.Annotated[str, Body(embed = True)]) -> JSONResponse:
-    success, error = await store.create(url)
-    return JSONResponse({
-        "code": 200 if success else 400,
-        "data": {"message": error}
-    }, status_code = 200 if success else 400)
+    await submit_url(url)
+    return JSONResponse({"code": 200})
 
 @app.delete("/v1/jobs/{job_id}")
 async def route_v1_job_delete(job_id: str) -> JSONResponse:

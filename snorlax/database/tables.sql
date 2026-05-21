@@ -37,11 +37,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     id         TEXT PRIMARY KEY,
     video_id   TEXT NOT NULL,
     url        TEXT NOT NULL,
-    status     TEXT DEFAULT "queued",
-    progress   INTEGER,
-    speed      REAL,
-    eta        INTEGER,
-    error      TEXT,
+    status     TEXT DEFAULT "queued",  -- See models.py for full list
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(video_id) REFERENCES videos(id) ON DELETE CASCADE
 );
@@ -54,16 +50,12 @@ SELECT
     c.preferred_id AS channel_preferred_id,
     j.id AS job_id,
     j.status,
-    j.progress,
-    j.speed,
-    j.eta,
-    j.error,
     j.created_at
 FROM videos v
 JOIN channels c ON v.channel_id = c.id
 JOIN jobs j ON j.video_id = v.id;
 
-UPDATE jobs SET status = 'queued' WHERE status IN ('downloading', 'remuxing');
+UPDATE jobs SET status = 'queued' WHERE status IN ('downloading', 'remuxing', 'postprocessing', 'failed');
 
 -- Full text search
 CREATE VIRTUAL TABLE IF NOT EXISTS videos_fts USING fts5(

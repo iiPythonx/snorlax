@@ -24,10 +24,6 @@ class Columns:
         ("chapters",             [        "full", "insert", "json"       ]),
         ("job_id",               [                                  "job"]),
         ("status",               [                                  "job"]),
-        ("progress",             [                                  "job"]),
-        ("speed",                [                                  "job"]),
-        ("eta",                  [                                  "job"]),
-        ("error",                [                                  "job"]),
     ]
 
     CHANNEL: ColumnList = [

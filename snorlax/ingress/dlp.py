@@ -4,14 +4,13 @@ import asyncio
 import typing
 from time import monotonic
 from dataclasses import dataclass
-from collections.abc import Callable, Coroutine
+from collections.abc import AsyncIterable, Callable, Coroutine
 
 from yt_dlp import YoutubeDL
 
 from snorlax.config import config
-from snorlax.ingress.models import Job, ProgressEvent
+from snorlax.ingress import Job, ProgressEvent, TEMP_PATH
 
-TEMP_PATH = config.snorlax.video_path / "in_progress"
 YTDL_OPTS = {
     "writesubtitles": True,
     "writethumbnail": True,
@@ -28,6 +27,7 @@ YTDL_OPTS = {
     "js_runtimes": {"bun": {}}
 }
 
+type Item = dict[str, typing.Any]
 type ProgressReturn = Callable[[ProgressEvent], Coroutine[typing.Any, typing.Any, None]]
 
 @dataclass
@@ -38,6 +38,9 @@ class DownloadState:
     postprocessing: bool  = False
 
 class DLP:
+    def __init__(self) -> None:
+        self.resolving_ytdl = YoutubeDL(YTDL_OPTS | {"extract_flat": True, "skip_download": "yes"})  # pyright: ignore[reportArgumentType]
+
     async def download(self, job: Job, progress_hook: ProgressReturn) -> None:
         loop, state = asyncio.get_running_loop(), DownloadState(last_updated = monotonic())
 
@@ -81,4 +84,27 @@ class DLP:
 
         ytdl = YoutubeDL(YTDL_OPTS | {"progress_hooks": [hook]})  # pyright: ignore[reportArgumentType]
         await asyncio.to_thread(ytdl.extract_info, job.url)
-        emit_status(status = "finished", progress = 100, speed = 0.0, eta = 0)
+
+    async def resolve(self, url: str) -> AsyncIterable[Item]:
+        if "/playlist" not in url:
+            for item in {"?list=", "&list="}:
+                url = url.split(item)[0]
+
+        info: Item = await asyncio.to_thread(self.resolving_ytdl.extract_info, url, download = False)  # pyright: ignore[reportAssignmentType]
+        match media_type := info.get("_type", info.get("media_type")):
+            case "playlist":
+                for item in info["entries"]:
+                    item_url = item.get("url") or item.get("webpage_url")
+                    if item_url is None:
+                        continue  # TODO: debug logging
+
+                    async for item in self.resolve(item_url):
+                        yield item
+
+            case "video":
+                yield info
+
+            case _:
+                raise ValueError(f"resolve() received an unsupported media type: {media_type}")
+
+dlp = DLP()

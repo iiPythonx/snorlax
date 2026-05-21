@@ -186,12 +186,14 @@ class Database:
         await self.db.execute("INSERT INTO jobs (id, video_id, url) VALUES (?, ?, ?)", (job_id, video_id, url))
         await self.db.commit()
 
-    async def update_job(self, job_id: str, **kwargs) -> None:
-        await self.db.execute(f"UPDATE jobs SET {', '.join(f'{k} = ?' for k in kwargs)} WHERE id = ?", tuple(kwargs.values()) + (job_id,))
-        if kwargs.get("status") == "finished":
-            await self.db.execute("UPDATE videos SET available = 1 WHERE id = (SELECT video_id FROM jobs WHERE id = ?)", (job_id,))
-
+    async def update_job(self, job_id: str, status: str) -> None:
+        await self.db.execute("UPDATE jobs SET status = ? WHERE id = ?", (status, job_id))
         await self.db.commit()
+
+    async def find_job_by_video_id(self, video_id: str) -> tuple[str, ...] | None:
+        async with self.db.execute("SELECT * FROM jobs WHERE video_id = ?", (video_id,)) as result:
+            result = await result.fetchone()
+            return tuple(result) if result is not None else None
 
     async def get_jobs(self, limit: int | None = None, page: int | None = 1) -> tuple[list[dict], int]:
         return await self._fetch(
