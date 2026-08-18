@@ -1,7 +1,7 @@
 __pycache__/
 .venv/
 videos/
-*.db
+*.db*
 *.egg-info
 node_modules/
 dist/
