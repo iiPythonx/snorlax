@@ -2,8 +2,9 @@ export default function About() {
     return <>
         <span>You are running Snorlax v{__VERSION__}, built by <a href = "https://iipython.dev">iiPython</a>.</span>
         <span>
-            Made possible by <a href = "https://fastapi.tiangolo.com/">FastAPI</a>,{" "}
+            Made possible by <a href = "https://elysiajs.com">Elysia</a>,{" "}
             <a href = "https://github.com/yt-dlp/yt-dlp">yt-dlp</a>,{" "}
+            <a href = "https://github.com/iqbal-rashed/ytdlp-nodejs">ytdlp-nodejs</a>,{" "}
             <a href = "https://vite.dev">vite</a>,{" "}
             <a href = "https://preactjs.com">preact</a>,
             and <a href = "https://videojs.org">video.js</a>,

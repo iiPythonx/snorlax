@@ -4,7 +4,7 @@
     "workspaces": [
         "snorlax/*"
     ],
-    "version": "5.0.0",
+    "version": "5.0.0-alpha",
     "scripts": {
         "dev": "bun run --parallel --filter \"*\" dev",
         "build": "bun run --filter \"*\" build"
