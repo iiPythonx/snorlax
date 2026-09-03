@@ -1,11 +1,9 @@
+import path from "path";
+
 import { defineConfig } from "vite";
 import preact from "@preact/preset-vite";
-import path from "path";
-import toml from "toml";
-import fs from "fs";
 
-const pyproject = toml.parse(fs.readFileSync("../../pyproject.toml", "utf-8"));
-const version = pyproject?.project?.version || "N/A";
+import { version } from "../../package.json" with { type: "json" };
 
 export default defineConfig({
     root: path.resolve(import.meta.dirname),
