@@ -1,6 +1,7 @@
 // Copyright (c) 2026 iiPython
 
 import { Elysia, t } from "elysia";
+import { dbPlugin } from "../database/elysia";
 import type { SnorlaxDB } from "../database";
 
 const paginationQuery = t.Object({
@@ -9,6 +10,7 @@ const paginationQuery = t.Object({
 });
 
 export const apiRoutes = new Elysia({ prefix: "/v1" })
+    .use(dbPlugin)
     .get("/channels", ({ db, query }) => {
         const { items, total } = (db as SnorlaxDB).getChannels(query.limit, query.page);
         return {
@@ -16,7 +18,6 @@ export const apiRoutes = new Elysia({ prefix: "/v1" })
             data: { items, total }
         };
     }, { query: paginationQuery })
-
 
     .get("/channel/:channel_id", ({ db, params, set }) => {
         const channel = (db as SnorlaxDB).getChannel(params.channel_id)
