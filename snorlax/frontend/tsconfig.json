@@ -29,5 +29,5 @@
         "noFallthroughCasesInSwitch": true,
         "noUncheckedSideEffectImports": true
     },
-    "include": ["snorlax/frontend/src"]
+    "include": ["src"]
 }
