@@ -2,14 +2,15 @@
 
 import asyncio
 import typing
-from time import monotonic
-from dataclasses import dataclass
 from collections.abc import AsyncIterable, Callable, Coroutine
+from dataclasses import dataclass
+from time import monotonic
 
 from yt_dlp import YoutubeDL
 
+from snorlax import SNORLAX_LOGGER
 from snorlax.config import config
-from snorlax.ingress import Job, ProgressEvent, TEMP_PATH
+from snorlax.ingress import TEMP_PATH, Job, ProgressEvent
 
 YTDL_OPTS = {
     "writesubtitles": True,
@@ -18,13 +19,13 @@ YTDL_OPTS = {
     "subtitleslangs": config.videos.subtitle_languages,
     "remote_components": {"ejs:github"},
     "outtmpl": str(TEMP_PATH / "%(id)s.%(ext)s"),
-    "format": "bestvideo+bestaudio",
-    "format_sort": ["codec:av1", "codec:vp9", "res", "fps", "br"],
+    "format": "bestvideo+bestaudio",  # TODO: config
+    # "format_sort": ["codec:av1", "codec:vp9", "res", "fps", "br"],  # TODO: config
     "merge_output_format": "mkv",
     "remux_video": "mkv",
     "quiet": True,
     "noprogress": True,
-    "js_runtimes": {"bun": {}}
+    # "js_runtimes": {"bun": {}}  # TODO: config
 }
 
 type Item = dict[str, typing.Any]
@@ -87,7 +88,7 @@ class DLP:
 
     async def resolve(self, url: str) -> AsyncIterable[Item]:
         if "/playlist" not in url:
-            for item in {"?list=", "&list="}:
+            for item in ("?list=", "&list="):
                 url = url.split(item)[0]
 
         info: Item = await asyncio.to_thread(self.resolving_ytdl.extract_info, url, download = False)  # pyright: ignore[reportAssignmentType]
@@ -96,7 +97,8 @@ class DLP:
                 for item in info["entries"]:
                     item_url = item.get("url") or item.get("webpage_url")
                     if item_url is None:
-                        continue  # TODO: debug logging
+                        SNORLAX_LOGGER.debug(f"resolve({url}): no item url found inside playlist entry")
+                        continue
 
                     async for item in self.resolve(item_url):
                         yield item
@@ -105,6 +107,7 @@ class DLP:
                 yield info
 
             case _:
-                raise ValueError(f"resolve() received an unsupported media type: {media_type}")
+                SNORLAX_LOGGER.debug(f"resolve({url}) received an unsupported media type: {media_type}")
+                return
 
 dlp = DLP()

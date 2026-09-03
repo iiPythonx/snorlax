@@ -1,8 +1,8 @@
 # Copyright (c) 2026 iiPython
 
-import sys
-import json
 import asyncio
+import json
+import sys
 from pathlib import Path
 
 import aiohttp
@@ -18,7 +18,7 @@ async def main() -> None:
     channel_cache: list[str] = []
     for item in Path(sys.argv[1]).glob("*.info.json"):
         metadata = json.loads(item.read_text())
-        if not metadata.get("_type") == "video":
+        if metadata.get("_type") != "video":
             print(f"{item.name}: This file does not appear to be a YouTube video.")
             continue
 

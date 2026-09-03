@@ -3,8 +3,8 @@
 # Modules
 import asyncio
 import typing
-from shutil import copyfileobj, rmtree
 from contextlib import asynccontextmanager
+from shutil import copyfileobj, rmtree
 
 from fastapi import BackgroundTasks, Body, Depends, FastAPI, Request, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
@@ -13,7 +13,8 @@ from pydantic import BaseModel, Field
 
 from snorlax.config import ROOT, config
 from snorlax.database import db
-from snorlax.ingress.intake import submit_url, queue
+from snorlax.ingress.intake import queue, submit_url
+
 
 # Handle API
 @asynccontextmanager
@@ -162,7 +163,8 @@ async def route_v1_job_delete(job_id: str) -> JSONResponse:
     if not success:
         return JSONResponse({"code": 404, "data": {"message": "The specified job does not exist."}}, status_code = 404)
 
-    await store.cancel(job_id)
+    # TODO: job cancelation
+
     return JSONResponse({"code": 200})
 
 # Mount assets

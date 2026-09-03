@@ -12,10 +12,10 @@ license-files = ["LICENSE.txt"]
 requires-python = ">=3.12"
 dependencies = [
     "aiosqlite>=0.22.1",
-    "fastapi>=0.135.3",
-    "python-multipart>=0.0.27",
-    "uvicorn[standard]>=0.44.0",
-    "yt-dlp[curl-cffi,default]>=2026.3.17",
+    "fastapi>=0.141.1",
+    "python-multipart>=0.0.32",
+    "uvicorn[standard]>=0.52.4",
+    "yt-dlp[curl-cffi,default]>=2026.8.19",
 ]
 
 [project.urls]

@@ -1,8 +1,8 @@
 # Copyright (c) 2025-2026 iiPython
 
 import typing
-from enum import StrEnum
 from dataclasses import dataclass
+from enum import StrEnum
 
 from snorlax.config import config
 

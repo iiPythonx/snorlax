@@ -3,8 +3,10 @@
 import asyncio
 from uuid import uuid4
 
-from snorlax.ingress import run, dlp, Job
-from snorlax.database import db, VIDEO_COLUMNS
+from snorlax import SNORLAX_LOGGER
+from snorlax.database import VIDEO_COLUMNS, db
+from snorlax.ingress import Job, dlp, run
+
 
 class Queue:
     def __init__(self) -> None:
@@ -17,15 +19,15 @@ class Queue:
             job: Job = await self.queue.get()
             self.active_jobs[job.id] = job
 
-            print("process(): now running:", job.id, job.video_id)
-            await run(job)
-            print(f"process(): run has completed on {job.id} / {job.video_id}")
+            SNORLAX_LOGGER.debug(f"process({job.id}): now running: {job.video_id}")
+            await run(self, job)
+            SNORLAX_LOGGER.debug(f"process({job.id}): run has completed on {job.video_id}")
 
             self.queue.task_done()
 
     async def add(self, job: Job) -> None:
         await self.queue.put(job)
-        print(f"add(): job added: {job}")
+        SNORLAX_LOGGER.debug(f"add({job.id}): job added: {job}")
 
     async def fetch_old_queue(self) -> None:
         for job in await db.get_queued_jobs():
@@ -37,11 +39,11 @@ async def submit_url(url: str) -> None:
     async for item in dlp.resolve(url):
         existing_video = await db.get_video(item["id"]) or {"available": False}
         if existing_video["available"]:
-            print("submit_url(): requested video is already available")
+            SNORLAX_LOGGER.debug(f"submit_url({item['id']}): requested video is already available")
             continue  # The video metadata exists AND the video file itself is already available
 
-        if await db.find_job_by_video_id(item["id"]) is not None:
-            print("submit_url(): request video already has a job for it")
+        if (job_data := await db.find_job_by_video_id(item["id"])) is not None:
+            SNORLAX_LOGGER.debug(f"submit_url({item['id']}): request video already has a job for it ({job_data[0]})")
             continue  # There's already a job present for this video
 
         await db.add_channel(item["channel_id"], item.get("uploader_id"), item["uploader"], item["channel_follower_count"])
@@ -52,6 +54,6 @@ async def submit_url(url: str) -> None:
 
         # Send job to database and immediate queue
         await db.add_job(job_id, item["id"], item["webpage_url"])
-        print(f"submit_url(): {item['id']}: job created")
+        SNORLAX_LOGGER.debug(f"submit_url({job_id}, {item['id']}): job created")
         await queue.add(Job(id = job_id, video_id = item["id"], url = item["webpage_url"]))
-        print(f"submit_url(): {item['id']}: queued")
+        SNORLAX_LOGGER.debug(f"submit_url({job_id}, {item['id']}): queued")

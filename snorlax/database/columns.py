@@ -1,13 +1,14 @@
 # Copyright (c) 2025-2026 iiPython
 
+from collections.abc import Sequence
 from functools import lru_cache
-from typing import Literal, Sequence
+from typing import ClassVar, Literal
 
 type ColumnType = Literal["base", "full", "insert", "json", "job"]
 type ColumnList = list[tuple[str, Sequence[ColumnType]]]
 
 class Columns:
-    VIDEO: ColumnList = [
+    VIDEO: ClassVar[ColumnList] = [
         # Column name            | Base  | Full  | Insert  | JSON  | Job
         ("id",                   ["base", "full", "insert",         "job"]),
         ("title",                ["base", "full", "insert",         "job"]),
@@ -26,7 +27,7 @@ class Columns:
         ("status",               [                                  "job"]),
     ]
 
-    CHANNEL: ColumnList = [
+    CHANNEL: ClassVar[ColumnList] = [
         ("id",           ["base"]),
         ("handle",       ["base"]),
         ("name",         ["base"]),
@@ -37,6 +38,8 @@ class Columns:
 class ColumnSet:
     def __init__(self, columns: ColumnList):
         self._columns = columns
+
+    # TODO: refactor cache use to prevent memleaks
 
     @lru_cache
     def get(self, column_type: ColumnType) -> tuple[str, ...]:
