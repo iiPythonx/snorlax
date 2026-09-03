@@ -27,7 +27,6 @@ CREATE TABLE IF NOT EXISTS videos (
 CREATE VIEW IF NOT EXISTS videos_w_channel AS
 SELECT
     v.*,
-    v.rowid AS rowid,
     c.name AS channel_name,
     c.preferred_id AS channel_preferred_id
 FROM videos v
